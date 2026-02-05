@@ -1,0 +1,24 @@
+.DS_Store
+node_modules/
+.env
+*.log
+telegram-bot/.env
+
+# Временные файлы разработки
+fix_*.py
+*_fixed*.js
+*_fixed*.html
+*.backup
+*.backup_*
+scripts_fixed_*.js
+index_fixed.html
+
+# Временные Python скрипты
+add_function.py
+check_balance.py
+clean_end.py
+remove_duplicates.py
+rewrite_function.py
+
+# CSV файлы (исходные данные)
+*.csv

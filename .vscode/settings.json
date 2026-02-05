@@ -1,0 +1,26 @@
+{
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true
+  },
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/.git": true
+  },
+  "files.autoSave": "off",
+  "files.hotExit": "off",
+  "files.saveConflictResolution": "askUser",
+  "editor.formatOnSave": false,
+  "editor.autoSave": "off",
+  "workbench.editor.enablePreview": false,
+  "workbench.editor.closeOnFileDelete": true,
+  "files.associations": {
+    "image": "plaintext"
+  }
+}
