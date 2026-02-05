@@ -4,6 +4,7 @@ node_modules/
 .env.local
 .env.*.local
 *.log
+logs.*.json
 telegram-bot/.env
 # Токены и секреты
 *_token.txt

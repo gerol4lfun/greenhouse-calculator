@@ -183,20 +183,27 @@ label {
 /* Адаптивность для мобильных */
 @media (max-width: 768px) {
   .block-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    display: flex !important;
   }
   
   .block-header h2 {
-    margin-bottom: 0;
+    margin-bottom: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
   
   .delivery-dates-button {
-    width: 100%;
-    justify-content: center;
-    min-width: auto;
-    align-self: stretch;
+    width: 100% !important;
+    justify-content: center !important;
+    min-width: auto !important;
+    max-width: 100% !important;
+    align-self: stretch !important;
+    box-sizing: border-box !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
   }
 }
 
@@ -3873,4 +3880,521 @@ input[type="radio"] {
   min-width: 24px;
   text-align: center;
 }
+
+/* ========== МОБИЛЬНАЯ АДАПТАЦИЯ (v186) ========== */
+/* Адаптация для экранов до 768px */
+@media (max-width: 768px) {
+  /* Основные контейнеры */
+  .calculator-container {
+    margin: 10px;
+    padding: 15px;
+    border-radius: 8px;
+  }
+
+  .auth-container {
+    margin: 20px 15px;
+    padding: 20px;
+    max-width: calc(100% - 30px);
+  }
+
+  /* Сетка блоков - на всю ширину */
+  .container {
+    flex-direction: column !important;
+    gap: 15px !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .block {
+    flex: 1 1 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 15px !important;
+    margin-bottom: 15px !important;
+    border-right: none !important;
+    border-bottom: 1px solid #e1e8ed !important;
+    box-sizing: border-box !important;
+  }
+
+  .block:last-child {
+    border-bottom: none !important;
+  }
+
+  /* Кнопки вверху справа */
+  .top-buttons-container {
+    position: relative;
+    top: auto;
+    right: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+    align-items: stretch;
+  }
+
+  .logout,
+  .admin-button {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  /* Заголовки */
+  .block h2,
+  .auth-container h2 {
+    font-size: 18px;
+    padding: 12px 15px;
+  }
+
+  .block-header h2 {
+    font-size: 16px;
+    padding: 10px 12px;
+  }
+
+  /* Формы и инпуты */
+  input[type="text"],
+  input[type="password"],
+  select,
+  textarea {
+    padding: 10px 12px;
+    font-size: 16px; /* Важно: 16px предотвращает зум на iOS */
+    margin: 5px 0;
+  }
+
+  /* Кнопки */
+  button:not(.logout):not(.admin-button):not(.close-modal-button) {
+    padding: 12px 16px;
+    font-size: 16px;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  /* Модальные окна */
+  .faq-modal-content,
+  .delivery-dates-modal-content,
+  .beds-modal-content,
+  .gifts-info-modal-content {
+    width: 95%;
+    max-width: 95%;
+    margin: 10px auto;
+    max-height: 90vh;
+    border-radius: 8px;
+  }
+
+  .faq-modal-header,
+  .delivery-dates-modal-header,
+  .beds-modal-header,
+  .gifts-info-modal-header {
+    padding: 15px;
+  }
+
+  .faq-modal-header h2,
+  .delivery-dates-modal-header h2,
+  .beds-modal-header h2,
+  .gifts-info-modal-header h2 {
+    font-size: 18px;
+    padding: 0;
+  }
+
+  .faq-modal-body,
+  .delivery-dates-modal-body,
+  .beds-modal-body,
+  .gifts-info-modal-body {
+    padding: 15px;
+    max-height: calc(90vh - 100px);
+  }
+
+  .close-modal-button {
+    width: 32px;
+    height: 32px;
+    font-size: 24px;
+    line-height: 32px;
+  }
+
+  /* Поиск в модальных окнах */
+  #faq-search-input,
+  #delivery-dates-search {
+    font-size: 16px;
+    padding: 10px;
+  }
+
+  /* Таблица дат доставки */
+  #delivery-dates-table-container {
+    max-height: calc(90vh - 200px);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Админ-панель */
+  .admin-panel {
+    padding: 15px;
+  }
+
+  .admin-panel h2 {
+    font-size: 18px;
+    padding: 12px 15px;
+  }
+
+  .admin-content {
+    padding: 15px 0;
+  }
+
+  .admin-form {
+    gap: 15px;
+  }
+
+  .btn-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .btn-group button {
+    width: 100%;
+  }
+
+  /* Коммерческие предложения */
+  #short-offer,
+  #commercial-offer {
+    font-size: 14px;
+    padding: 12px;
+    min-height: 200px;
+  }
+
+  /* Кнопки действий */
+  .calculate-button,
+  .reset-button,
+  .blue-button {
+    padding: 14px 20px;
+    font-size: 16px;
+  }
+
+  /* Подарки */
+  .gifts-container {
+    padding: 15px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .gift-slot {
+    margin-bottom: 15px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .gift-slot select {
+    font-size: 16px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .gift-slot label {
+    width: 100% !important;
+    display: block !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* Грядки */
+  .beds-button {
+    padding: 14px 20px;
+    font-size: 16px;
+  }
+
+  .beds-icon {
+    font-size: 20px;
+  }
+
+  /* Toast уведомления */
+  .toast-container {
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    max-width: calc(100% - 20px);
+  }
+
+  .toast {
+    padding: 12px 16px;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+  /* Радио-кнопки доставки */
+  .delivery-options {
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding: 12px !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+  }
+
+  .delivery-options label {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    padding: 12px 16px !important;
+    font-size: 15px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Карта */
+  #map {
+    width: 100% !important;
+    height: 300px !important;
+    margin-top: 15px;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  /* Сетка материалов */
+  .materials-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .material-card {
+    padding: 15px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .material-icon {
+    font-size: 32px;
+  }
+
+  .material-content h3 {
+    font-size: 16px;
+    margin-bottom: 5px;
+  }
+
+  .material-content p {
+    font-size: 14px;
+  }
+
+  .material-arrow {
+    align-self: flex-end;
+    font-size: 20px;
+  }
+
+  /* Вкладки КП - переопределяем !important стили */
+  .kp-tabs {
+    flex-direction: column !important;
+    border-bottom: none !important;
+    border-radius: 8px !important;
+    gap: 5px !important;
+    background-color: transparent !important;
+    padding: 0 !important;
+  }
+
+  .kp-tab {
+    width: 100% !important;
+    padding: 12px 16px !important;
+    font-size: 15px !important;
+    border-bottom: none !important;
+    border: 2px solid #e1e8ed !important;
+    border-radius: 8px !important;
+    margin-bottom: 5px !important;
+    margin-top: 0 !important;
+    flex: none !important;
+    display: block !important;
+    background-color: #fff !important;
+    background: #fff !important;
+  }
+
+  .kp-tab:hover {
+    background-color: #f8f9fa !important;
+  }
+
+  .kp-tab.active {
+    border-color: #4a90e2 !important;
+    background-color: #e3f2fd !important;
+    background: #e3f2fd !important;
+    border-bottom: 2px solid #4a90e2 !important;
+  }
+
+  /* Группы кнопок */
+  .btn-group {
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
+    display: flex !important;
+  }
+
+  .btn-group button {
+    width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Чекбоксы */
+  .checkbox-group-small,
+  .checkbox-group-large {
+    flex-direction: column !important;
+    gap: 12px !important;
+    display: flex !important;
+  }
+
+  .checkbox-group-small label,
+  .checkbox-group-large label {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 12px !important;
+    justify-content: flex-start !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Адрес контейнер */
+  .address-container {
+    width: 100%;
+  }
+
+  #suggestions {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Результат доставки */
+  #result {
+    margin-top: 15px;
+    padding: 12px;
+    font-size: 14px;
+  }
+}
+
+/* Адаптация для очень маленьких экранов (до 480px) */
+@media (max-width: 480px) {
+  .calculator-container {
+    margin: 5px;
+    padding: 10px;
+  }
+
+  .auth-container {
+    margin: 15px 10px;
+    padding: 15px;
+  }
+
+  .block {
+    padding: 12px;
+  }
+
+  .block h2,
+  .auth-container h2 {
+    font-size: 16px;
+    padding: 10px 12px;
+  }
+
+  .faq-modal-content,
+  .delivery-dates-modal-content,
+  .beds-modal-content,
+  .gifts-info-modal-content {
+    width: 98%;
+    max-width: 98%;
+    margin: 5px auto;
+  }
+
+  .faq-modal-body,
+  .delivery-dates-modal-body,
+  .beds-modal-body,
+  .gifts-info-modal-body {
+    padding: 10px;
+  }
+
+  input[type="text"],
+  input[type="password"],
+  select,
+  textarea {
+    padding: 8px 10px;
+    font-size: 16px;
+  }
+
+  button:not(.logout):not(.admin-button):not(.close-modal-button) {
+    padding: 10px 14px;
+    font-size: 15px;
+  }
+
+  /* Радио-кнопки доставки на очень маленьких экранах */
+  .delivery-options label {
+    padding: 10px 12px !important;
+    font-size: 14px !important;
+  }
+
+  /* Карта на очень маленьких экранах */
+  #map {
+    height: 250px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Вкладки КП на очень маленьких экранах */
+  .kp-tab {
+    padding: 10px 12px !important;
+    font-size: 14px !important;
+  }
+
+  /* Блок заголовка на очень маленьких экранах */
+  .block-header {
+    gap: 8px !important;
+  }
+
+  .block-header h2 {
+    font-size: 16px !important;
+    padding: 10px 12px !important;
+  }
+
+  .delivery-dates-button {
+    padding: 12px 14px !important;
+    font-size: 14px !important;
+  }
+
+  /* Параметры (label + select) - вертикальная раскладка */
+  .parameters {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .parameters label {
+    width: 100% !important;
+    margin-right: 0 !important;
+    text-align: left !important;
+    padding-right: 0 !important;
+    margin-bottom: 5px !important;
+  }
+
+  .parameters select {
+    width: 100% !important;
+    padding: 12px 40px 12px 16px !important;
+  }
+
+  /* Дополнительные товары - адаптация */
+  .product-label {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    padding: 12px !important;
+    border: 1px solid #e1e8ed !important;
+    border-radius: 8px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .product-label .product-name {
+    width: 100% !important;
+    text-align: left !important;
+    margin-left: 0 !important;
+    margin-bottom: 8px !important;
+  }
+
+  .product-label select {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-right: 0 !important;
+  }
+
+  .product-label .product-price {
+    width: 100% !important;
+    text-align: left !important;
+    margin-left: 0 !important;
+    margin-top: 5px !important;
+  }
 }
