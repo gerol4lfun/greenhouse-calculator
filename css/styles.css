@@ -267,6 +267,12 @@ label {
   z-index: 1000 !important;
   margin: 0 !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  margin-right: 0 !important;
+}
+
+/* Если админ-панель видна, сдвигаем кнопку "Выйти" левее */
+.admin-button:not(.hidden) ~ .logout {
+  right: 140px !important;
 }
 
 .logout:hover {

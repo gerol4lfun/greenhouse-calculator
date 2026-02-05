@@ -1,7 +1,7 @@
 
 // Константа для контроля отладки
 const DEBUG = false; // Отключено для продакшена
-const APP_VERSION = "v149"; // v149: исправлен сброс всех фильтров (теперь сбрасываются дополнительные товары, доставка, грядки и все опции)
+const APP_VERSION = "v150"; // v150: улучшены уведомления (toast вместо alert), улучшен поиск FAQ, исправлено расположение кнопки "Выйти", добавлен вопрос про сборку грядок, добавлено склонение названий городов
 
 // ==================== СИСТЕМА УВЕДОМЛЕНИЙ (TOAST) ====================
 
@@ -2687,6 +2687,133 @@ async function generateShortOffer(finalTotalPrice1, selectedEntry) {
         }
     }
     
+    // Функция склонения названия города в родительный падеж (для "доставка до...")
+    function declineCityName(cityName) {
+        if (!cityName) return cityName;
+        
+        const city = cityName.trim();
+        const lowerCity = city.toLowerCase();
+        
+        // Специальные случаи
+        const specialCases = {
+            'москва': 'Москвы',
+            'санкт-петербург': 'Санкт-Петербурга',
+            'питер': 'Санкт-Петербурга',
+            'спб': 'Санкт-Петербурга',
+            'казань': 'Казани',
+            'нижний новгород': 'Нижнего Новгорода',
+            'екатеринбург': 'Екатеринбурга',
+            'новосибирск': 'Новосибирска',
+            'краснодар': 'Краснодара',
+            'воронеж': 'Воронежа',
+            'челябинск': 'Челябинска',
+            'уфа': 'Уфы',
+            'ростов-на-дону': 'Ростова-на-Дону',
+            'набережные челны': 'Набережных Челнов',
+            'истра': 'Истры',
+            'подольск': 'Подольска',
+            'химки': 'Химок',
+            'балашиха': 'Балашихи',
+            'мытищи': 'Мытищ',
+            'королёв': 'Королёва',
+            'люберцы': 'Люберец',
+            'красногорск': 'Красногорска',
+            'электросталь': 'Электростали',
+            'коломна': 'Коломны',
+            'одинцово': 'Одинцово',
+            'серпухов': 'Серпухова',
+            'щелково': 'Щёлкова',
+            'орехово-зуево': 'Орехово-Зуево',
+            'дмитров': 'Дмитрова',
+            'долгопрудный': 'Долгопрудного',
+            'жуковский': 'Жуковского',
+            'реутов': 'Реутова',
+            'домодедово': 'Домодедова',
+            'раменское': 'Раменского',
+            'пушкино': 'Пушкино',
+            'волоколамск': 'Волоколамска',
+            'звенигород': 'Звенигорода',
+            'клин': 'Клина',
+            'солнечногорск': 'Солнечногорска',
+            'тверь': 'Твери',
+            'тула': 'Тулы',
+            'калуга': 'Калуги',
+            'брянск': 'Брянска',
+            'смоленск': 'Смоленска',
+            'рязань': 'Рязани',
+            'ярославль': 'Ярославля',
+            'кострома': 'Костромы',
+            'иваново': 'Иваново',
+            'владимир': 'Владимира',
+            'вологда': 'Вологды',
+            'белгород': 'Белгорода',
+            'курск': 'Курска',
+            'орёл': 'Орла',
+            'липецк': 'Липецка',
+            'тамбов': 'Тамбова',
+            'пенза': 'Пензы',
+            'саратов': 'Саратова',
+            'самара': 'Самары',
+            'ульяновск': 'Ульяновска',
+            'чебоксары': 'Чебоксар',
+            'йошкар-ола': 'Йошкар-Олы',
+            'киров': 'Кирова',
+            'пермь': 'Перми',
+            'екатеринбург': 'Екатеринбурга',
+            'тюмень': 'Тюмени',
+            'омск': 'Омска',
+            'барнаул': 'Барнаула',
+            'кемерово': 'Кемерово',
+            'новокузнецк': 'Новокузнецка',
+            'красноярск': 'Красноярска',
+            'иркутск': 'Иркутска',
+            'хабаровск': 'Хабаровска',
+            'владивосток': 'Владивостока',
+            'ставрополь': 'Ставрополя',
+            'майкоп': 'Майкопа',
+            'черкесск': 'Черкесска',
+            'великий новгород': 'Великого Новгорода'
+        };
+        
+        // Проверяем специальные случаи
+        if (specialCases[lowerCity]) {
+            return specialCases[lowerCity];
+        }
+        
+        // Общие правила склонения
+        // Если заканчивается на -а (кроме -ка, -га, -ха), меняем на -ы
+        if (city.endsWith('а') && !city.endsWith('ка') && !city.endsWith('га') && !city.endsWith('ха')) {
+            return city.slice(0, -1) + 'ы';
+        }
+        // Если заканчивается на -я, меняем на -и
+        if (city.endsWith('я')) {
+            return city.slice(0, -1) + 'и';
+        }
+        // Если заканчивается на -ь, меняем на -и
+        if (city.endsWith('ь')) {
+            return city.slice(0, -1) + 'и';
+        }
+        // Если заканчивается на -ск, -цк, -нк, добавляем -а
+        if (city.endsWith('ск') || city.endsWith('цк') || city.endsWith('нк')) {
+            return city + 'а';
+        }
+        // Если заканчивается на -ов, -ев, -ин, -ын, добавляем -а
+        if (city.endsWith('ов') || city.endsWith('ев') || city.endsWith('ин') || city.endsWith('ын')) {
+            return city + 'а';
+        }
+        // Если заканчивается на -град, меняем на -града
+        if (city.endsWith('град')) {
+            return city + 'а';
+        }
+        // Если заканчивается на -бург, меняем на -бурга
+        if (city.endsWith('бург')) {
+            return city + 'а';
+        }
+        
+        // Если не подошло ни одно правило, возвращаем как есть
+        return city;
+    }
+    
     // Формируем заголовок
     let title = `${form} теплица ${width}×${length}`;
     
@@ -2698,7 +2825,9 @@ async function generateShortOffer(finalTotalPrice1, selectedEntry) {
         const lastPart = addressParts[addressParts.length - 1];
         
         if (lastPart) {
-            title += ` с доставкой до ${lastPart}`;
+            // Склоняем название города в родительный падеж
+            const declinedCity = declineCityName(lastPart);
+            title += ` с доставкой до ${declinedCity}`;
         }
     }
     
@@ -2866,7 +2995,7 @@ function copyCommercialOffer() {
     const offerText = document.getElementById(textareaId);
     
     if (!offerText) {
-        alert("Ошибка: текстовое поле не найдено!");
+        showError("Ошибка: текстовое поле не найдено!");
         return;
     }
     
@@ -2875,7 +3004,7 @@ function copyCommercialOffer() {
     if (!textValue || 
         textValue === "Здесь будет ваше короткое КП." || 
         textValue === "Здесь будет ваше коммерческое предложение.") {
-        alert("Сначала рассчитайте стоимость теплицы, чтобы сформировать коммерческое предложение.");
+        showWarning("Сначала рассчитайте стоимость теплицы, чтобы сформировать коммерческое предложение.");
         return;
     }
     
@@ -2886,20 +3015,20 @@ function copyCommercialOffer() {
         // Используем современный API, если доступен
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(textValue).then(() => {
-                alert("Коммерческое предложение скопировано!");
+                showSuccess("Коммерческое предложение скопировано!");
             }).catch(() => {
                 // Fallback на старый метод
-    document.execCommand("copy");
-                alert("Коммерческое предложение скопировано!");
+                document.execCommand("copy");
+                showSuccess("Коммерческое предложение скопировано!");
             });
         } else {
             // Fallback для старых браузеров
             document.execCommand("copy");
-    alert("Коммерческое предложение скопировано!");
+            showSuccess("Коммерческое предложение скопировано!");
         }
     } catch (err) {
         console.error("Ошибка при копировании:", err);
-        alert("Не удалось скопировать. Попробуйте выделить текст вручную.");
+        showError("Не удалось скопировать. Попробуйте выделить текст вручную.");
     }
 }
 
@@ -4767,6 +4896,9 @@ function filterFAQ() {
         return;
     }
     
+    // Разбиваем запрос на ключевые слова для более гибкого поиска
+    const keywords = searchQuery.split(/\s+/).filter(word => word.length > 0);
+    
     // Ищем по всем категориям
     const faqItems = document.querySelectorAll('.faq-item');
     let hasResults = false;
@@ -4774,8 +4906,14 @@ function filterFAQ() {
     faqItems.forEach(item => {
         const questionText = item.querySelector('.faq-question-text')?.textContent.toLowerCase() || '';
         const answerText = item.querySelector('.faq-answer-content')?.textContent.toLowerCase() || '';
+        const fullText = questionText + ' ' + answerText;
         
-        if (questionText.includes(searchQuery) || answerText.includes(searchQuery)) {
+        // Проверяем, содержит ли текст все ключевые слова (или хотя бы одно)
+        const matchesAll = keywords.every(keyword => fullText.includes(keyword));
+        const matchesAny = keywords.some(keyword => fullText.includes(keyword));
+        
+        // Показываем, если совпадает хотя бы одно ключевое слово
+        if (matchesAny) {
             item.style.display = 'block';
             hasResults = true;
         } else {
@@ -5499,9 +5637,22 @@ function applyBedsSelection() {
     
     // Сохраняем состояние чекбокса сборки
     const assemblyCheckbox = document.getElementById('beds-assembly-checkbox');
+    const hasSelectedBeds = Object.keys(selectedBeds).length > 0 && 
+                            Object.values(selectedBeds).some(qty => qty > 0);
+    
     if (assemblyCheckbox) {
         bedsAssemblyEnabled = assemblyCheckbox.checked;
         localStorage.setItem('bedsAssemblyEnabled', bedsAssemblyEnabled ? 'true' : 'false');
+        
+        // Если грядки выбраны, но сборка не выбрана - спрашиваем
+        if (hasSelectedBeds && !bedsAssemblyEnabled) {
+            const userWantsAssembly = confirm('Грядки выбраны. Нужна ли сборка грядок?');
+            if (userWantsAssembly) {
+                bedsAssemblyEnabled = true;
+                assemblyCheckbox.checked = true;
+                localStorage.setItem('bedsAssemblyEnabled', 'true');
+            }
+        }
     }
     
     // Закрываем модальное окно
