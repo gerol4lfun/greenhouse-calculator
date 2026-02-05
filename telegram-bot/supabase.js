@@ -42,6 +42,8 @@ async function updateDeliveryDates(deliveryData) {
 
     for (const item of deliveryData) {
         try {
+            console.log(`💾 Обновление: ${item.city} - ${item.date}${item.restrictions ? ' (кроме ' + item.restrictions + ')' : ''}`);
+            
             // Проверяем, существует ли город
             const { data: existing, error: checkError } = await supabaseClient
                 .from('delivery_dates')
@@ -56,8 +58,10 @@ async function updateDeliveryDates(deliveryData) {
             const updateData = {
                 delivery_date: item.date,
                 updated_at: new Date().toISOString(),
-                restrictions: item.restrictions !== null ? item.restrictions : null
+                restrictions: item.restrictions !== null && item.restrictions !== undefined ? item.restrictions : null
             };
+            
+            console.log(`  📝 Данные для обновления:`, JSON.stringify(updateData));
 
             if (existing) {
                 // Обновляем существующую запись

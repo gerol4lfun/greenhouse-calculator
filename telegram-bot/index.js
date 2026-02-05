@@ -121,7 +121,19 @@ bot.on('message', async (msg) => {
         // Парсим текст
         bot.sendMessage(chatId, '⏳ Обрабатываю данные...');
 
+        // Логируем входящий текст для отладки
+        console.log('📥 Входящий текст (первые 200 символов):', text.substring(0, 200));
+        console.log('📥 Длина текста:', text.length);
+        console.log('📥 Количество строк:', text.split('\n').length);
+
         const parsedData = parseDeliveryDates(text);
+        
+        // Логируем результаты парсинга
+        console.log('📊 Найдено записей:', parsedData.length);
+        console.log('📊 С ограничениями:', parsedData.filter(r => r.restrictions).length);
+        parsedData.forEach((item, index) => {
+            console.log(`  ${index + 1}. ${item.city} - ${item.date}${item.restrictions ? ' (кроме ' + item.restrictions + ')' : ''}`);
+        });
 
         if (parsedData.length === 0) {
             bot.sendMessage(chatId, '❌ Не найдено ни одной записи в правильном формате.\n\nИспользуйте формат: "Город с ДД.ММ"\n\nПример: Москва с 9.02');

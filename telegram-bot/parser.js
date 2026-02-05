@@ -8,9 +8,16 @@
  * @returns {Array} Массив объектов {city, date, restrictions}
  */
 function parseDeliveryDates(text) {
+    if (!text || typeof text !== 'string') {
+        console.error('❌ parseDeliveryDates: text is not a string:', typeof text);
+        return [];
+    }
+
     // Нормализуем текст: убираем лишние пробелы, заменяем неразрывные пробелы
     const normalizedText = text
         .replace(/\u00A0/g, ' ') // Заменяем неразрывные пробелы на обычные
+        .replace(/\u2009/g, ' ') // Заменяем тонкие пробелы
+        .replace(/\u202F/g, ' ') // Заменяем узкие неразрывные пробелы
         .replace(/\r\n/g, '\n') // Нормализуем переносы строк
         .replace(/\r/g, '\n');
     
@@ -19,6 +26,8 @@ function parseDeliveryDates(text) {
         .map(line => line.trim())
         .filter(line => line.length > 0);
     
+    console.log(`🔍 Парсинг: обработано ${lines.length} строк`);
+    
     const results = [];
 
     // Регулярное выражение для поиска:
@@ -26,11 +35,13 @@ function parseDeliveryDates(text) {
     // 2. "Город с ДД.ММ, кроме ДД.ММ, ДД.ММ" - с запятой перед "кроме"
     // 3. "Город с ДД.ММ (кроме ДД.ММ, ДД.ММ)" - со скобками
     
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
         let city, date, restrictions = null;
         
         // Сначала пробуем формат с запятой: "Город с ДД.ММ, кроме ..."
         // ВАЖНО: Проверяем этот формат ПЕРВЫМ, так как он более специфичный
+        // Улучшенное регулярное выражение: более гибкое к пробелам
         const patternWithComma = /^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})\s*,\s*кроме\s+(.+)$/i;
         let match = line.match(patternWithComma);
         
@@ -38,6 +49,8 @@ function parseDeliveryDates(text) {
             city = match[1].trim();
             date = match[2].trim();
             const restrictionsText = match[3].trim();
+            
+            console.log(`  ✅ Строка ${i + 1}: найдено с ограничениями (запятая) - ${city}, ${date}, кроме ${restrictionsText}`);
             
             // Обрабатываем ограничения
             if (restrictionsText.toLowerCase().includes('дату доставки нет') || 
@@ -57,6 +70,8 @@ function parseDeliveryDates(text) {
                 date = match[2].trim();
                 const restrictionsText = match[3].trim();
                 
+                console.log(`  ✅ Строка ${i + 1}: найдено с ограничениями (скобки) - ${city}, ${date}, кроме ${restrictionsText}`);
+                
                 // Обрабатываем ограничения
                 if (restrictionsText.toLowerCase().includes('дату доставки нет') || 
                     restrictionsText.toLowerCase().includes('доставки нет')) {
@@ -73,12 +88,16 @@ function parseDeliveryDates(text) {
                 
                 // Дополнительная проверка: если после даты есть запятая и "кроме", это не простой формат
                 if (match && line.includes(',') && line.includes('кроме')) {
+                    console.log(`  ⚠️ Строка ${i + 1}: пропущена (есть запятая и "кроме", но не распознана): "${line}"`);
                     match = null;
                 }
                 
                 if (match) {
                     city = match[1].trim();
                     date = match[2].trim();
+                    console.log(`  ✅ Строка ${i + 1}: найдено без ограничений - ${city}, ${date}`);
+                } else {
+                    console.log(`  ❌ Строка ${i + 1}: не распознана - "${line}"`);
                 }
             }
         }
@@ -94,6 +113,13 @@ function parseDeliveryDates(text) {
                 date: date,
                 restrictions: restrictions
             });
+        } else {
+            // Если не нашли - логируем для отладки
+            console.log(`  ❌ Строка ${i + 1}: не удалось распарсить - "${line}"`);
+            // Пробуем понять, почему не распозналось
+            if (line.includes('с ') && line.includes('.')) {
+                console.log(`     ⚠️ Строка содержит "с " и точку, но не распознана. Возможно, проблема с форматом.`);
+            }
         }
     }
 
