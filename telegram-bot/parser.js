@@ -8,32 +8,83 @@
  * @returns {Array} Массив объектов {city, date, restrictions}
  */
 function parseDeliveryDates(text) {
-    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+    // Нормализуем текст: убираем лишние пробелы, заменяем неразрывные пробелы
+    const normalizedText = text
+        .replace(/\u00A0/g, ' ') // Заменяем неразрывные пробелы на обычные
+        .replace(/\r\n/g, '\n') // Нормализуем переносы строк
+        .replace(/\r/g, '\n');
+    
+    const lines = normalizedText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+    
     const results = [];
 
-    // Регулярное выражение для поиска: "Город с ДД.ММ" или "Город с ДД.ММ (кроме ДД, ДД)" или "Город с ДД.ММ (кроме и в этот дату доставки нет)"
-    const pattern = /^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})(?:\s*\(кроме\s+([^)]+)\))?$/i;
-
+    // Регулярное выражение для поиска:
+    // 1. "Город с ДД.ММ" - простая дата
+    // 2. "Город с ДД.ММ, кроме ДД.ММ, ДД.ММ" - с запятой перед "кроме"
+    // 3. "Город с ДД.ММ (кроме ДД.ММ, ДД.ММ)" - со скобками
+    
     for (const line of lines) {
-        const match = line.match(pattern);
+        let city, date, restrictions = null;
+        
+        // Сначала пробуем формат с запятой: "Город с ДД.ММ, кроме ..."
+        // ВАЖНО: Проверяем этот формат ПЕРВЫМ, так как он более специфичный
+        const patternWithComma = /^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})\s*,\s*кроме\s+(.+)$/i;
+        let match = line.match(patternWithComma);
+        
         if (match) {
-            const city = match[1].trim();
-            const date = match[2].trim();
-            let restrictions = null;
+            city = match[1].trim();
+            date = match[2].trim();
+            const restrictionsText = match[3].trim();
             
             // Обрабатываем ограничения
-            if (match[3]) {
+            if (restrictionsText.toLowerCase().includes('дату доставки нет') || 
+                restrictionsText.toLowerCase().includes('доставки нет')) {
+                restrictions = restrictionsText;
+            } else {
+                // Это список дат через запятую
+                restrictions = restrictionsText.split(',').map(r => r.trim()).join(', ');
+            }
+        } else {
+            // Пробуем формат со скобками: "Город с ДД.ММ (кроме ...)"
+            const patternWithBrackets = /^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})\s*\(кроме\s+([^)]+)\)$/i;
+            match = line.match(patternWithBrackets);
+            
+            if (match) {
+                city = match[1].trim();
+                date = match[2].trim();
                 const restrictionsText = match[3].trim();
-                // Если это "и в этот дату доставки нет" или подобное, сохраняем как есть
+                
+                // Обрабатываем ограничения
                 if (restrictionsText.toLowerCase().includes('дату доставки нет') || 
                     restrictionsText.toLowerCase().includes('доставки нет')) {
                     restrictions = restrictionsText;
                 } else {
-                    // Иначе это список дат через запятую
+                    // Это список дат через запятую
                     restrictions = restrictionsText.split(',').map(r => r.trim()).join(', ');
                 }
+            } else {
+                // Простой формат без ограничений: "Город с ДД.ММ"
+                // ВАЖНО: Проверяем, что после даты нет запятой и "кроме"
+                const patternSimple = /^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})(?:\s|$)/i;
+                match = line.match(patternSimple);
+                
+                // Дополнительная проверка: если после даты есть запятая и "кроме", это не простой формат
+                if (match && line.includes(',') && line.includes('кроме')) {
+                    match = null;
+                }
+                
+                if (match) {
+                    city = match[1].trim();
+                    date = match[2].trim();
+                }
             }
-
+        }
+        
+        // Если нашли город и дату, добавляем в результаты
+        if (city && date) {
             // Нормализация названий городов
             const normalizedCity = normalizeCityName(city);
 

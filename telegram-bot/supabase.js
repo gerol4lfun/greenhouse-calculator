@@ -55,12 +55,9 @@ async function updateDeliveryDates(deliveryData) {
 
             const updateData = {
                 delivery_date: item.date,
-                updated_at: new Date().toISOString()
+                updated_at: new Date().toISOString(),
+                restrictions: item.restrictions !== null ? item.restrictions : null
             };
-
-            if (item.restrictions !== null) {
-                updateData.restrictions = item.restrictions;
-            }
 
             if (existing) {
                 // Обновляем существующую запись

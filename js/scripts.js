@@ -572,6 +572,7 @@ function getFormCategory(formName) {
 let currentCityData = []; // Данные для текущего города
 let deliveryCost = 0; // Стоимость доставки
 let currentDeliveryDate = null; // Текущая дата доставки для выбранного города
+let currentDeliveryRestrictions = null; // Текущие ограничения доставки для выбранного города
 let activeOfferTab = 'short'; // Активная вкладка КП: 'short' или 'long'
 
 // Кеширование для оптимизации производительности
@@ -870,6 +871,7 @@ function isNetworkError(error) {
 async function loadDeliveryDate(cityName) {
     if (!cityName) {
         currentDeliveryDate = null;
+        currentDeliveryRestrictions = null;
         updateDeliveryDateDisplay();
         return null;
     }
@@ -878,7 +880,7 @@ async function loadDeliveryDate(cityName) {
         // Пробуем найти точное совпадение
         let { data, error } = await supabaseClient
             .from('delivery_dates')
-            .select('delivery_date')
+            .select('delivery_date, restrictions')
             .eq('city_name', cityName)
             .single();
 
@@ -890,12 +892,13 @@ async function loadDeliveryDate(cityName) {
             const normalizedCity = normalizeCityName(cityName);
             const { data: altData, error: altError } = await supabaseClient
                 .from('delivery_dates')
-                .select('city_name, delivery_date')
+                .select('city_name, delivery_date, restrictions')
                 .limit(100);
 
             if (altError) {
                 console.error("Ошибка при загрузке альтернативных дат:", altError);
                 currentDeliveryDate = null;
+                currentDeliveryRestrictions = null;
                 updateDeliveryDateDisplay();
                 return null;
             }
@@ -910,6 +913,7 @@ async function loadDeliveryDate(cityName) {
                 if (found) {
                     if (DEBUG) console.log(`Найдена дата для "${cityName}" через альтернативное название "${found.city_name}": ${found.delivery_date}`);
                     currentDeliveryDate = found.delivery_date;
+                    currentDeliveryRestrictions = found.restrictions || null;
                     updateDeliveryDateDisplay();
                     return found.delivery_date;
                 }
@@ -917,17 +921,20 @@ async function loadDeliveryDate(cityName) {
             
             if (DEBUG) console.log(`Дата доставки не найдена для города "${cityName}"`);
             currentDeliveryDate = null;
+            currentDeliveryRestrictions = null;
             updateDeliveryDateDisplay();
             return null;
         }
 
         if (DEBUG) console.log(`Найдена дата доставки для "${cityName}": ${data.delivery_date}`);
         currentDeliveryDate = data.delivery_date;
+        currentDeliveryRestrictions = data.restrictions || null;
         updateDeliveryDateDisplay();
         return data.delivery_date;
     } catch (err) {
         console.error("Ошибка при загрузке даты доставки:", err);
         currentDeliveryDate = null;
+        currentDeliveryRestrictions = null;
         updateDeliveryDateDisplay();
         return null;
     }
@@ -1752,7 +1759,7 @@ if (additionalProducts.length > 0) {
 
     // Сохраняем последнюю рассчитанную цену для использования в onGiftChange()
     lastCalculatedPrice = finalTotalPrice;
-    
+
     // Генерация коммерческого предложения (длинное КП)
     await generateCommercialOffer(basePrice, assemblyCost, foundationCost, additionalProducts, additionalProductsCost, deliveryPrice, finalTotalPrice, selectedEntry, basePriceText, assemblyText, foundationText, additionalProductsText, snowLoadFinalText);
     
@@ -2953,6 +2960,14 @@ async function generateShortOffer(finalTotalPrice1, selectedEntry) {
     if (currentDeliveryDate) {
         const currentYear = new Date().getFullYear();
         deliveryDateText = currentDeliveryDate + "." + currentYear;
+        
+        // Добавляем ограничения, если они есть
+        if (currentDeliveryRestrictions && currentDeliveryRestrictions.trim()) {
+            const restrictions = currentDeliveryRestrictions.split(',').map(r => r.trim()).filter(r => r);
+            if (restrictions.length > 0) {
+                deliveryDateText += `, кроме ${restrictions.join(', ')}`;
+            }
+        }
     }
     shortOffer += `\nБлижайшая дата доставки — ${deliveryDateText}.`;
     
@@ -3633,11 +3648,29 @@ async function loadAllDeliveryDates() {
     }
 
     try {
-        // Загружаем только базовые поля (без restrictions, т.к. поле может отсутствовать)
-        const { data, error } = await supabaseClient
+        // Загружаем поля включая restrictions для отображения ограничений
+        // Если колонка restrictions не существует, загружаем без неё
+        let { data, error } = await supabaseClient
             .from('delivery_dates')
-            .select('city_name, delivery_date')
+            .select('city_name, delivery_date, restrictions')
             .order('city_name');
+        
+        // Если ошибка из-за отсутствия колонки restrictions, загружаем без неё
+        if (error && error.code === '42703' && error.message.includes('restrictions')) {
+            console.warn('⚠️ Колонка restrictions не найдена. Загружаем данные без ограничений. Выполните миграцию: db/migrations/20260203_add_restrictions_to_delivery_dates.sql');
+            const { data: dataWithoutRestrictions, error: errorWithoutRestrictions } = await supabaseClient
+                .from('delivery_dates')
+                .select('city_name, delivery_date')
+                .order('city_name');
+            
+            if (errorWithoutRestrictions) {
+                throw errorWithoutRestrictions;
+            }
+            
+            // Добавляем пустое поле restrictions для совместимости
+            data = dataWithoutRestrictions.map(item => ({ ...item, restrictions: null }));
+            error = null;
+        }
 
         // Добавляем пустое поле restrictions для совместимости с кодом отрисовки
         let dataWithRestrictions = null;
@@ -6154,20 +6187,20 @@ function updateGiftsBlock(totalPrice, overrideSelectedGifts = null) {
         finalSelectedGifts = { ...overrideSelectedGifts };
     } else {
         // Иначе читаем ТОЛЬКО из DOM (самый надежный источник)
-        const existingSelects = document.querySelectorAll('.gift-select');
-        existingSelects.forEach(select => {
-            const giftItem = select.closest('.gift-item');
-            // Сохраняем только видимые элементы с непустыми значениями
-            if (giftItem) {
-                const computedStyle = window.getComputedStyle(giftItem);
-                if (computedStyle.display !== 'none' && computedStyle.visibility !== 'hidden') {
-                    if (select.value && select.value.trim() !== '') {
+    const existingSelects = document.querySelectorAll('.gift-select');
+    existingSelects.forEach(select => {
+        const giftItem = select.closest('.gift-item');
+        // Сохраняем только видимые элементы с непустыми значениями
+        if (giftItem) {
+            const computedStyle = window.getComputedStyle(giftItem);
+            if (computedStyle.display !== 'none' && computedStyle.visibility !== 'hidden') {
+                if (select.value && select.value.trim() !== '') {
                         finalSelectedGifts[select.id] = select.value;
-                    }
                 }
             }
-        });
-        
+        }
+    });
+    
         // Если в DOM ничего не найдено, пробуем localStorage (только для восстановления между сессиями)
         if (Object.keys(finalSelectedGifts).length === 0) {
             const savedGifts = JSON.parse(localStorage.getItem('selectedGifts') || '{}');
@@ -6252,7 +6285,7 @@ function updateGiftsBlock(totalPrice, overrideSelectedGifts = null) {
     }
     
     // Сохраняем финальные выбранные подарки в localStorage (для восстановления между сессиями)
-    localStorage.setItem('selectedGifts', JSON.stringify(finalSelectedGifts));
+        localStorage.setItem('selectedGifts', JSON.stringify(finalSelectedGifts));
 }
 
 /**
@@ -6303,18 +6336,26 @@ function rebuildShortOfferWithGifts(overrideSelectedGifts = null) {
             if (currentDeliveryDate) {
                 const currentYear = new Date().getFullYear();
                 deliveryDateText = currentDeliveryDate + "." + currentYear;
+                
+                // Добавляем ограничения, если они есть
+                if (currentDeliveryRestrictions && currentDeliveryRestrictions.trim()) {
+                    const restrictions = currentDeliveryRestrictions.split(',').map(r => r.trim()).filter(r => r);
+                    if (restrictions.length > 0) {
+                        deliveryDateText += `, кроме ${restrictions.join(', ')}`;
+                    }
+                }
             }
             datePart = '\nБлижайшая дата доставки — ' + deliveryDateText + '.';
         }
         
         // Получаем текст подарков
-        let giftsText = '';
-        if (overrideSelectedGifts && Object.keys(overrideSelectedGifts).length > 0) {
-            giftsText = getGiftsTextFromObject(overrideSelectedGifts);
-        } else {
-            giftsText = getGiftsText();
-        }
-        
+    let giftsText = '';
+    if (overrideSelectedGifts && Object.keys(overrideSelectedGifts).length > 0) {
+        giftsText = getGiftsTextFromObject(overrideSelectedGifts);
+    } else {
+        giftsText = getGiftsText();
+    }
+    
         // Пересобираем КП: до условий + условия + отступ + подарки (если есть) + отступ + дата
         let newOffer = beforeGifts;
         if (giftsText && giftsText.trim() !== '') {
@@ -6338,12 +6379,20 @@ function rebuildShortOfferWithGifts(overrideSelectedGifts = null) {
     if (deliveryMatch) {
         datePart = '\n' + deliveryMatch[0].trim();
         if (!datePart.endsWith('.')) datePart += '.';
-    } else {
+        } else {
         // Если дата не найдена, получаем из переменной
         let deliveryDateText = "17 февраля";
         if (currentDeliveryDate) {
             const currentYear = new Date().getFullYear();
             deliveryDateText = currentDeliveryDate + "." + currentYear;
+            
+            // Добавляем ограничения, если они есть
+            if (currentDeliveryRestrictions && currentDeliveryRestrictions.trim()) {
+                const restrictions = currentDeliveryRestrictions.split(',').map(r => r.trim()).filter(r => r);
+                if (restrictions.length > 0) {
+                    deliveryDateText += `, кроме ${restrictions.join(', ')}`;
+                }
+            }
         }
         datePart = '\nБлижайшая дата доставки — ' + deliveryDateText + '.';
     }
@@ -6451,7 +6500,7 @@ function rebuildLongOfferWithGifts(overrideSelectedGifts = null) {
     let giftsText = '';
     if (overrideSelectedGifts && Object.keys(overrideSelectedGifts).length > 0) {
         giftsText = getGiftsTextFromObject(overrideSelectedGifts);
-    } else {
+            } else {
         giftsText = getGiftsText();
     }
     
@@ -6617,7 +6666,7 @@ function onGiftChange() {
     
     // 2. Затем обновляем КП с подарками (один раз, в конце)
     // Используем selectedGifts, которые уже сохранены в localStorage
-    updateCommercialOffersWithGifts(selectedGifts);
+            updateCommercialOffersWithGifts(selectedGifts);
 }
 
 /**
