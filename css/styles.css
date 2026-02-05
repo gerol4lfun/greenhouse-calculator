@@ -44,6 +44,24 @@ textarea {
   background: #fafbfc;
 }
 
+/* Общие стили для всех select (кроме тех, что уже имеют свои стили) */
+select:not(.parameters select):not(.product-label select) {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-position: right 14px center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%235a6c7d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+select:not(.parameters select):not(.product-label select):hover {
+  border-color: #cbd5e0;
+  background-color: #fff;
+}
+
 input[type="text"]:focus,
 input[type="password"]:focus,
 select:focus,
@@ -282,14 +300,28 @@ label {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-position: right 12px center;
+  background-position: right 14px center;
   background-repeat: no-repeat;
-  background-size: 12px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235a6c7d' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-size: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%235a6c7d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   font-size: 16px;
   border: 2px solid #e1e8ed;
   border-radius: 8px;
-  padding-right: 35px;
+  padding: 12px 40px 12px 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #fafbfc;
+}
+
+.parameters select:hover {
+  border-color: #cbd5e0;
+  background-color: #fff;
+}
+
+.parameters select:focus {
+  border-color: #4a90e2;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
 }
 
 select option {
@@ -452,19 +484,37 @@ select option {
 /* Вместо чекбокса используем select для выбора количества */
 .product-label select {
   margin-right: 10px;
-  width: 50px;
-  height: 36px;
-  line-height: 36px;
+  width: 60px;
+  height: 40px;
+  line-height: 40px;
   text-align: center;
   border: 2px solid #e1e8ed;
-  border-radius: 6px;
-  appearance: menulist;
-  background: #fff;
+  border-radius: 8px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background: #fafbfc;
   font-weight: 500;
+  font-size: 15px;
+  padding: 0 30px 0 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-position: right 8px center;
+  background-repeat: no-repeat;
+  background-size: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M3.5 5L7 8.5L10.5 5' stroke='%235a6c7d' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.product-label select:hover {
+  border-color: #cbd5e0;
+  background-color: #fff;
 }
 
 .product-label select:focus {
   border-color: #4a90e2;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+  outline: none;
 }
 
 /* Название товара */
@@ -812,13 +862,29 @@ select option {
 .admin-form select,
 .admin-form input[type="password"] {
   width: 100%;
-  padding: 12px 16px;
+  padding: 12px 40px 12px 16px;
   border: 2px solid #e1e8ed;
   border-radius: 8px;
   font-size: 16px;
   box-sizing: border-box;
   background: #fafbfc;
   transition: all 0.3s ease;
+}
+
+.admin-form select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-position: right 14px center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%235a6c7d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  cursor: pointer;
+}
+
+.admin-form select:hover {
+  border-color: #cbd5e0;
+  background-color: #fff;
 }
 
 .admin-form select:focus,
