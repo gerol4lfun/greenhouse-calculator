@@ -3,6 +3,79 @@
  */
 
 /**
+ * Нормализует дату в формате ДД.ММ (добавляет ведущие нули)
+ * @param {string} dm - Дата в формате Д.ММ или ДД.ММ
+ * @returns {string} Нормализованная дата ДД.ММ
+ */
+function normalizeDM(dm) {
+    if (!dm) return dm;
+    const parts = dm.split('.').map(x => x.trim());
+    if (parts.length !== 2) return dm;
+    const [d, m] = parts;
+    if (!d || !m) return dm;
+    return `${d.padStart(2, '0')}.${m.padStart(2, '0')}`; // 9.02 -> 09.02, но оставляем как есть если уже 12.02
+}
+
+/**
+ * Парсит одну строку: "Город с ДД.ММ[, кроме ДД.ММ, ДД.ММ]"
+ * @param {string} line - Строка для парсинга
+ * @returns {Object|null} Объект {city_name, delivery_date, restrictions} или null
+ */
+function parseDeliveryLine(line) {
+    // Универсальный паттерн: поддерживает оба формата
+    // Москва с 12.02, кроме 13.02, 14.02
+    // Москва с 12.02 (кроме 13.02, 14.02)
+    // Питер с 9.02
+    
+    // Сначала пробуем формат с запятой
+    let m = line.match(/^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})(?:\s*,\s*кроме\s*(.+))?$/i);
+    
+    // Если не нашли, пробуем формат со скобками
+    if (!m) {
+        m = line.match(/^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})(?:\s*\(кроме\s*([^)]+)\))?$/i);
+    }
+    
+    if (!m) {
+        console.log(`  ❌ Не распознана: "${line}"`);
+        return null;
+    }
+
+    const city_name = m[1].trim();
+    const delivery_date = normalizeDM(m[2].trim());
+
+    let restrictions = null;
+    if (m[3]) {
+        // Обрабатываем ограничения
+        const restrictionsText = m[3]
+            .replace(/^\s*кроме\s+/i, '') // на всякий случай убираем "кроме" если есть
+            .trim();
+        
+        if (restrictionsText.toLowerCase().includes('дату доставки нет') || 
+            restrictionsText.toLowerCase().includes('доставки нет')) {
+            restrictions = restrictionsText;
+        } else {
+            // Это список дат через запятую
+            restrictions = restrictionsText
+                .split(',')
+                .map(s => s.trim())
+                .filter(Boolean)
+                .map(normalizeDM)
+                .join(', '); // ✅ "13.02, 14.02"
+        }
+        
+        console.log(`  ✅ Найдено с ограничениями: ${city_name} - ${delivery_date}, кроме ${restrictions}`);
+    } else {
+        console.log(`  ✅ Найдено без ограничений: ${city_name} - ${delivery_date}`);
+    }
+
+    return { 
+        city_name, 
+        delivery_date, 
+        restrictions 
+    };
+}
+
+/**
  * Парсит текст и извлекает информацию о городах и датах доставки
  * @param {string} text - Текст для парсинга
  * @returns {Array} Массив объектов {city, date, restrictions}
@@ -13,117 +86,28 @@ function parseDeliveryDates(text) {
         return [];
     }
 
-    // Нормализуем текст: убираем лишние пробелы, заменяем неразрывные пробелы
-    const normalizedText = text
-        .replace(/\u00A0/g, ' ') // Заменяем неразрывные пробелы на обычные
-        .replace(/\u2009/g, ' ') // Заменяем тонкие пробелы
-        .replace(/\u202F/g, ' ') // Заменяем узкие неразрывные пробелы
-        .replace(/\r\n/g, '\n') // Нормализуем переносы строк
-        .replace(/\r/g, '\n');
-    
-    const lines = normalizedText
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
+    // ВАЖНО: Делим ТОЛЬКО по переносам строк, НЕ по запятым!
+    const lines = text
+        .split(/\r?\n/)          // ✅ только переносы строк
+        .map(l => l.trim())
+        .filter(Boolean);        // убираем пустые строки
     
     console.log(`🔍 Парсинг: обработано ${lines.length} строк`);
     
-    const results = [];
-
-    // Регулярное выражение для поиска:
-    // 1. "Город с ДД.ММ" - простая дата
-    // 2. "Город с ДД.ММ, кроме ДД.ММ, ДД.ММ" - с запятой перед "кроме"
-    // 3. "Город с ДД.ММ (кроме ДД.ММ, ДД.ММ)" - со скобками
+    const results = lines
+        .map(parseDeliveryLine)
+        .filter(Boolean);        // убираем null
     
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        let city, date, restrictions = null;
-        
-        // Сначала пробуем формат с запятой: "Город с ДД.ММ, кроме ..."
-        // ВАЖНО: Проверяем этот формат ПЕРВЫМ, так как он более специфичный
-        // Улучшенное регулярное выражение: более гибкое к пробелам
-        const patternWithComma = /^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})\s*,\s*кроме\s+(.+)$/i;
-        let match = line.match(patternWithComma);
-        
-        if (match) {
-            city = match[1].trim();
-            date = match[2].trim();
-            const restrictionsText = match[3].trim();
-            
-            console.log(`  ✅ Строка ${i + 1}: найдено с ограничениями (запятая) - ${city}, ${date}, кроме ${restrictionsText}`);
-            
-            // Обрабатываем ограничения
-            if (restrictionsText.toLowerCase().includes('дату доставки нет') || 
-                restrictionsText.toLowerCase().includes('доставки нет')) {
-                restrictions = restrictionsText;
-            } else {
-                // Это список дат через запятую
-                restrictions = restrictionsText.split(',').map(r => r.trim()).join(', ');
-            }
-        } else {
-            // Пробуем формат со скобками: "Город с ДД.ММ (кроме ...)"
-            const patternWithBrackets = /^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})\s*\(кроме\s+([^)]+)\)$/i;
-            match = line.match(patternWithBrackets);
-            
-            if (match) {
-                city = match[1].trim();
-                date = match[2].trim();
-                const restrictionsText = match[3].trim();
-                
-                console.log(`  ✅ Строка ${i + 1}: найдено с ограничениями (скобки) - ${city}, ${date}, кроме ${restrictionsText}`);
-                
-                // Обрабатываем ограничения
-                if (restrictionsText.toLowerCase().includes('дату доставки нет') || 
-                    restrictionsText.toLowerCase().includes('доставки нет')) {
-                    restrictions = restrictionsText;
-                } else {
-                    // Это список дат через запятую
-                    restrictions = restrictionsText.split(',').map(r => r.trim()).join(', ');
-                }
-            } else {
-                // Простой формат без ограничений: "Город с ДД.ММ"
-                // ВАЖНО: Проверяем, что после даты нет запятой и "кроме"
-                const patternSimple = /^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})(?:\s|$)/i;
-                match = line.match(patternSimple);
-                
-                // Дополнительная проверка: если после даты есть запятая и "кроме", это не простой формат
-                if (match && line.includes(',') && line.includes('кроме')) {
-                    console.log(`  ⚠️ Строка ${i + 1}: пропущена (есть запятая и "кроме", но не распознана): "${line}"`);
-                    match = null;
-                }
-                
-                if (match) {
-                    city = match[1].trim();
-                    date = match[2].trim();
-                    console.log(`  ✅ Строка ${i + 1}: найдено без ограничений - ${city}, ${date}`);
-                } else {
-                    console.log(`  ❌ Строка ${i + 1}: не распознана - "${line}"`);
-                }
-            }
-        }
-        
-        // Если нашли город и дату, добавляем в результаты
-        if (city && date) {
-            // Нормализация названий городов
-            const normalizedCity = normalizeCityName(city);
-
-            results.push({
-                city: normalizedCity,
-                originalCity: city,
-                date: date,
-                restrictions: restrictions
-            });
-        } else {
-            // Если не нашли - логируем для отладки
-            console.log(`  ❌ Строка ${i + 1}: не удалось распарсить - "${line}"`);
-            // Пробуем понять, почему не распозналось
-            if (line.includes('с ') && line.includes('.')) {
-                console.log(`     ⚠️ Строка содержит "с " и точку, но не распознана. Возможно, проблема с форматом.`);
-            }
-        }
-    }
-
-    return results;
+    // Преобразуем в формат, который ожидает остальной код
+    return results.map(item => {
+        const normalizedCity = normalizeCityName(item.city_name);
+        return {
+            city: normalizedCity,
+            originalCity: item.city_name,
+            date: item.delivery_date,
+            restrictions: item.restrictions
+        };
+    });
 }
 
 /**

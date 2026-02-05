@@ -55,10 +55,13 @@ async function updateDeliveryDates(deliveryData) {
                 throw checkError;
             }
 
+            // ВАЖНО: Если restrictions не указаны, устанавливаем null (чтобы очистить старые ограничения)
             const updateData = {
                 delivery_date: item.date,
                 updated_at: new Date().toISOString(),
-                restrictions: item.restrictions !== null && item.restrictions !== undefined ? item.restrictions : null
+                restrictions: (item.restrictions !== null && item.restrictions !== undefined && item.restrictions.trim() !== '') 
+                    ? item.restrictions.trim() 
+                    : null
             };
             
             console.log(`  📝 Данные для обновления:`, JSON.stringify(updateData));
