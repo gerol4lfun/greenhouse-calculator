@@ -11,7 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.28.0/dist/umd/supabase.min.js"></script>
   
   <!-- cache-bust: Safari иногда держит старые стили, поэтому версия должна меняться при правках -->
-  <link rel="stylesheet" href="css/styles.css?v=150">
+  <link rel="stylesheet" href="css/styles.css?v=153">
 </head>
   <body>
     <!-- Контейнер для уведомлений -->
@@ -94,8 +94,11 @@
 
   <!-- Калькулятор -->
   <div class="calculator-container hidden" id="calculator-container">
-    <button class="logout" onclick="logout()">Выйти</button>
-    <button class="admin-button hidden" id="admin-button" onclick="toggleAdminPanel()">Админ-панель</button>
+    <!-- Контейнер для кнопок вверху справа -->
+    <div class="top-buttons-container">
+      <button class="admin-button hidden" id="admin-button" onclick="toggleAdminPanel()">Админ-панель</button>
+      <button class="logout" onclick="logout()">Выйти</button>
+    </div>
     <div class="container">
       
       <!-- Админ-панель для управления паролями -->

@@ -1,7 +1,7 @@
 
 // Константа для контроля отладки
 const DEBUG = false; // Отключено для продакшена
-const APP_VERSION = "v150"; // v150: улучшены уведомления (toast вместо alert), улучшен поиск FAQ, исправлено расположение кнопки "Выйти", добавлен вопрос про сборку грядок, добавлено склонение названий городов
+const APP_VERSION = "v153"; // v153: исправлено расположение кнопок через flexbox контейнер, кнопка "Выйти" больше не исчезает
 
 // ==================== СИСТЕМА УВЕДОМЛЕНИЙ (TOAST) ====================
 
@@ -1695,14 +1695,14 @@ productSelects.forEach(select => {
 
     // Формируем текст дополнительных товаров с указанием количества, если больше 1
     // ВАЖНО: не перезаписываем additionalProductsText, а добавляем к существующему тексту
-    if (additionalProducts.length > 0) {
+if (additionalProducts.length > 0) {
         const productsText = additionalProducts.map(product => {
-            if (product.quantity > 1) {
-                return `${product.name} x ${product.quantity} - ${formatPrice(product.cost)} рублей`;
-            } else {
-                return `${product.name} - ${formatPrice(product.cost)} рублей`;
-            }
-        }).join('\n');
+        if (product.quantity > 1) {
+            return `${product.name} x ${product.quantity} - ${formatPrice(product.cost)} рублей`;
+        } else {
+            return `${product.name} - ${formatPrice(product.cost)} рублей`;
+        }
+    }).join('\n');
         // Добавляем к существующему тексту (который может содержать грядки)
         additionalProductsText = (additionalProductsText ? additionalProductsText + '\n\n' : '') + productsText;
     }
@@ -3018,7 +3018,7 @@ function copyCommercialOffer() {
                 showSuccess("Коммерческое предложение скопировано!");
             }).catch(() => {
                 // Fallback на старый метод
-                document.execCommand("copy");
+    document.execCommand("copy");
                 showSuccess("Коммерческое предложение скопировано!");
             });
         } else {
@@ -3216,12 +3216,27 @@ async function initializeCalculator() {
     await new Promise(resolve => setTimeout(resolve, 100));
     
     const adminButton = document.getElementById("admin-button");
+    const logoutButton = document.querySelector(".logout");
+    const topButtonsContainer = document.querySelector(".top-buttons-container");
+    
+    // Убеждаемся, что контейнер и кнопка "Выйти" всегда видимы
+    if (topButtonsContainer) {
+        topButtonsContainer.style.display = "flex";
+        topButtonsContainer.style.visibility = "visible";
+        topButtonsContainer.style.opacity = "1";
+    }
+    if (logoutButton) {
+        logoutButton.style.display = "block";
+        logoutButton.style.visibility = "visible";
+        logoutButton.style.opacity = "1";
+    }
     
     if (adminButton) {
         if (isAdmin) {
             adminButton.classList.remove("hidden");
             adminButton.style.display = "block";
             adminButton.style.visibility = "visible";
+            adminButton.style.opacity = "1";
             await loadUsersForAdmin(); // Загружаем список пользователей для админ-панели
         } else {
             adminButton.classList.add("hidden");
@@ -3349,12 +3364,27 @@ function toggleAdminPanel() {
     if (!adminPanel) return;
 
     const isHidden = adminPanel.classList.contains("hidden");
+    const adminButton = document.getElementById("admin-button");
+    const logoutButton = document.querySelector(".logout");
+    const topButtonsContainer = document.querySelector(".top-buttons-container");
+    
+    // Убеждаемся, что контейнер и кнопка "Выйти" всегда видимы
+    if (topButtonsContainer) {
+        topButtonsContainer.style.display = "flex";
+        topButtonsContainer.style.visibility = "visible";
+        topButtonsContainer.style.opacity = "1";
+    }
+    if (logoutButton) {
+        logoutButton.style.display = "block";
+        logoutButton.style.visibility = "visible";
+        logoutButton.style.opacity = "1";
+    }
     
     if (isHidden) {
         // Проверяем права админа перед показом
         const isAdmin = localStorage.getItem(ADMIN_KEY) === 'true';
         if (!isAdmin) {
-            alert("У вас нет прав доступа к админ-панели.");
+            showError("У вас нет прав доступа к админ-панели.");
             return;
         }
         adminPanel.classList.remove("hidden");
@@ -4899,45 +4929,70 @@ function filterFAQ() {
     // Разбиваем запрос на ключевые слова для более гибкого поиска
     const keywords = searchQuery.split(/\s+/).filter(word => word.length > 0);
     
-    // Ищем по всем категориям
-    const faqItems = document.querySelectorAll('.faq-item');
-    let hasResults = false;
-    
-    faqItems.forEach(item => {
-        const questionText = item.querySelector('.faq-question-text')?.textContent.toLowerCase() || '';
-        const answerText = item.querySelector('.faq-answer-content')?.textContent.toLowerCase() || '';
+    // Ищем по исходным данным faqData.items, а не по отрендеренным элементам
+    const matchingItems = faqData.items.filter(item => {
+        const questionText = (item.question || '').toLowerCase();
+        const answerText = (item.answer || '').toLowerCase();
         const fullText = questionText + ' ' + answerText;
         
-        // Проверяем, содержит ли текст все ключевые слова (или хотя бы одно)
-        const matchesAll = keywords.every(keyword => fullText.includes(keyword));
-        const matchesAny = keywords.some(keyword => fullText.includes(keyword));
-        
-        // Показываем, если совпадает хотя бы одно ключевое слово
-        if (matchesAny) {
-            item.style.display = 'block';
-            hasResults = true;
-        } else {
-            item.style.display = 'none';
-        }
+        // Проверяем, содержит ли текст хотя бы одно ключевое слово
+        return keywords.some(keyword => fullText.includes(keyword));
     });
     
-    // Показываем сообщение, если ничего не найдено
-    const faqList = document.querySelector('.faq-list');
-    if (faqList) {
-        let emptyMsg = faqList.querySelector('.faq-search-empty');
-        if (!hasResults) {
-            if (!emptyMsg) {
-                emptyMsg = document.createElement('div');
-                emptyMsg.className = 'faq-search-empty';
-                emptyMsg.textContent = 'Ничего не найдено. Попробуйте другой запрос.';
-                faqList.appendChild(emptyMsg);
-            }
+    // Рендерим найденные результаты
+    const contentDiv = document.getElementById('faq-content');
+    if (!contentDiv) return;
+    
+    let html = '';
+    
+    // Показываем категории (но не делаем их активными при поиске)
+    html += '<div class="faq-categories">';
+    faqData.categories.forEach(category => {
+        html += `
+            <button class="faq-category-tab" 
+                    onclick="filterFAQByCategory('${category.id}')">
+                <span class="faq-category-icon">${category.icon}</span>
+                <span class="faq-category-name">${category.name}</span>
+            </button>
+        `;
+    });
+    html += '</div>';
+    
+    // Рендерим найденные вопросы
+    html += '<div class="faq-list">';
+    
+    if (matchingItems.length === 0) {
+        html += '<div class="faq-search-empty">Ничего не найдено. Попробуйте другой запрос.</div>';
         } else {
-            if (emptyMsg) {
-                emptyMsg.remove();
-            }
-        }
+        matchingItems.forEach((item, searchIndex) => {
+            // Находим оригинальный индекс в faqData.items для правильной работы toggleFAQAnswer
+            const originalIndex = faqData.items.findIndex(originalItem => 
+                originalItem.question === item.question && originalItem.answer === item.answer
+            );
+            const itemIndex = originalIndex >= 0 ? originalIndex : searchIndex + 10000; // Используем большой индекс если не нашли
+            
+            const answerFormatted = formatFAQAnswer(item.answer || '');
+            const hasImages = item.images && item.images.length > 0;
+            
+            html += `
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQAnswer(${itemIndex})">
+                        <span class="faq-question-text">${item.question || 'Вопрос не указан'}</span>
+                        <span class="faq-toggle">+</span>
+                    </div>
+                    <div class="faq-answer" id="faq-answer-${itemIndex}" style="display: none;">
+                        <div class="faq-answer-content">${answerFormatted}</div>
+                        ${hasImages ? `<div class="faq-images">${item.images.map(img => `<img src="${img}" alt="FAQ image" onclick="openImageModal('${img}')" style="max-width: 100%; cursor: pointer; margin: 10px 0; border-radius: 8px;">`).join('')}</div>` : ''}
+                        <button class="faq-copy-btn" onclick="copyFAQAnswer(${itemIndex})">📋 Копировать</button>
+                    </div>
+                </div>
+            `;
+        });
     }
+    
+    html += '</div>';
+    
+    contentDiv.innerHTML = html;
 }
 
 // ==================== ФУНКЦИИ ДЛЯ РАБОТЫ С ГРЯДКАМИ ====================
@@ -5213,8 +5268,8 @@ function getRecommendedBeds(height) {
         const sideBedLength = Math.min(length, 12); // Максимум 12 м
         
         // Находим центральную грядку (ширина 1 м)
-        const centerBed = BEDS_DATA.find(b => 
-            b.height === height && 
+    const centerBed = BEDS_DATA.find(b => 
+        b.height === height && 
             b.width === 1 && 
             b.length === centerBedLengthFinal
         );
@@ -5295,9 +5350,9 @@ function getRecommendedBeds(height) {
         const sideBed = BEDS_DATA.find(b => 
             b.height === height && 
             b.width === 0.8 && 
-            b.length === 4
-        );
-        
+        b.length === 4
+    );
+    
         if (!sideBed) return null;
         
         return {
@@ -5631,6 +5686,108 @@ function updateBedsAssemblyPrice() {
 }
 
 // Функция применения выбора грядок
+// Функция показа вопроса про сборку грядок в стиле toast
+function showBedsAssemblyQuestion(assemblyCost, callback) {
+    const container = document.getElementById('toast-container');
+    if (!container) {
+        // Fallback на confirm, если toast контейнер не найден
+        const message = assemblyCost > 0 
+            ? `Грядки выбраны. Нужна ли сборка грядок за ${formatPrice(assemblyCost)} рублей?`
+            : 'Грядки выбраны. Нужна ли сборка грядок?';
+        const result = confirm(message);
+        if (callback) callback(result);
+        return;
+    }
+    
+    // Создаем модальное overlay для вопроса
+    const overlay = document.createElement('div');
+    overlay.className = 'toast-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+    `;
+    
+    // Формируем текст вопроса с стоимостью
+    const questionText = assemblyCost > 0 
+        ? `Нужна ли сборка грядок за ${formatPrice(assemblyCost)} рублей?`
+        : 'Нужна ли сборка грядок?';
+    
+    // Создаем toast-подобное окно с вопросом
+    const questionToast = document.createElement('div');
+    questionToast.className = 'toast toast-info';
+    questionToast.style.cssText = `
+        background: #fff;
+        border-radius: 12px;
+        padding: 24px;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        z-index: 10002;
+    `;
+    
+    questionToast.innerHTML = `
+        <div class="toast-icon" style="font-size: 24px; margin-bottom: 12px;">❓</div>
+        <div class="toast-content">
+            <div class="toast-title" style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">Грядки выбраны</div>
+            <div class="toast-message" style="font-size: 16px; margin-bottom: 20px;">${questionText}</div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button class="toast-btn-cancel" style="
+                    padding: 10px 20px;
+                    border: 2px solid #e1e8ed;
+                    border-radius: 8px;
+                    background: #f8f9fa;
+                    color: #5a6c7d;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: all 0.3s ease;
+                ">Нет</button>
+                <button class="toast-btn-ok" style="
+                    padding: 10px 20px;
+                    border: none;
+                    border-radius: 8px;
+                    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+                    color: #fff;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    transition: all 0.3s ease;
+                ">Да</button>
+            </div>
+        </div>
+    `;
+    
+    // Обработчики кнопок
+    const btnCancel = questionToast.querySelector('.toast-btn-cancel');
+    const btnOk = questionToast.querySelector('.toast-btn-ok');
+    
+    const closeQuestion = (result) => {
+        overlay.remove();
+        if (callback) callback(result);
+    };
+    
+    btnCancel.addEventListener('click', () => closeQuestion(false));
+    btnOk.addEventListener('click', () => closeQuestion(true));
+    
+    // Закрытие по клику на overlay
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            closeQuestion(false);
+        }
+    });
+    
+    overlay.appendChild(questionToast);
+    document.body.appendChild(overlay);
+}
+
 function applyBedsSelection() {
     // Сохраняем выбранные грядки в localStorage
     localStorage.setItem('selectedBeds', JSON.stringify(selectedBeds));
@@ -5640,23 +5797,37 @@ function applyBedsSelection() {
     const hasSelectedBeds = Object.keys(selectedBeds).length > 0 && 
                             Object.values(selectedBeds).some(qty => qty > 0);
     
+    // Сначала закрываем модальное окно с грядками
+    closeBedsModal();
+    
     if (assemblyCheckbox) {
         bedsAssemblyEnabled = assemblyCheckbox.checked;
         localStorage.setItem('bedsAssemblyEnabled', bedsAssemblyEnabled ? 'true' : 'false');
         
         // Если грядки выбраны, но сборка не выбрана - спрашиваем
         if (hasSelectedBeds && !bedsAssemblyEnabled) {
-            const userWantsAssembly = confirm('Грядки выбраны. Нужна ли сборка грядок?');
-            if (userWantsAssembly) {
-                bedsAssemblyEnabled = true;
-                assemblyCheckbox.checked = true;
-                localStorage.setItem('bedsAssemblyEnabled', 'true');
-            }
+            // Рассчитываем стоимость сборки для показа в вопросе
+            const assemblyCost = calculateBedsAssemblyCost(selectedBeds);
+            
+            // Показываем вопрос после небольшой задержки, чтобы модальное окно успело закрыться
+            setTimeout(() => {
+                showBedsAssemblyQuestion(assemblyCost, (userWantsAssembly) => {
+                    if (userWantsAssembly) {
+                        bedsAssemblyEnabled = true;
+                        assemblyCheckbox.checked = true;
+                        localStorage.setItem('bedsAssemblyEnabled', 'true');
+                        showSuccess('Сборка грядок включена');
+                    }
+                    
+                    // Пересчитываем стоимость
+                    if (typeof calculateGreenhouseCost === 'function') {
+                        calculateGreenhouseCost();
+                    }
+                });
+            }, 300); // Небольшая задержка для плавного закрытия модального окна
+            return;
         }
     }
-    
-    // Закрываем модальное окно
-    closeBedsModal();
     
     // Пересчитываем стоимость
     if (typeof calculateGreenhouseCost === 'function') {

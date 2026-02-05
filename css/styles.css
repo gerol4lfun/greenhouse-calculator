@@ -250,10 +250,18 @@ label {
   border-right: none;
 }
 
+/* Контейнер для кнопок вверху справа */
+.top-buttons-container {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  z-index: 1000;
+}
+
 .logout {
-  position: absolute !important;
-  top: 10px !important;
-  right: 10px !important;
   background: #f8f9fa !important;
   color: #5a6c7d !important;
   border: 2px solid #e1e8ed !important;
@@ -264,15 +272,11 @@ label {
   width: auto !important;
   transition: all 0.3s ease !important;
   font-weight: 500 !important;
-  z-index: 1000 !important;
   margin: 0 !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-  margin-right: 0 !important;
-}
-
-/* Если админ-панель видна, сдвигаем кнопку "Выйти" левее */
-.admin-button:not(.hidden) ~ .logout {
-  right: 140px !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .logout:hover {
@@ -781,9 +785,6 @@ select option {
 
 /* --- Админ-панель --- */
 .admin-button {
-  position: absolute !important;
-  top: 10px !important;
-  right: 140px !important;
   background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important;
   background-color: #27ae60 !important;
   color: #fff !important;
@@ -796,15 +797,14 @@ select option {
   min-width: auto !important;
   max-width: none !important;
   display: block !important;
-  z-index: 1000 !important;
   margin: 0 !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
   box-sizing: border-box !important;
   text-align: center !important;
   font-weight: 500 !important;
   box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3) !important;
   transition: all 0.3s ease !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .admin-button:hover {
