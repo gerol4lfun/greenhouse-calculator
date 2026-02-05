@@ -128,6 +128,10 @@ bot.on('message', async (msg) => {
         console.log('📥 Входящий текст (первые 200 символов):', text.substring(0, 200));
         console.log('📥 Длина текста:', text.length);
         console.log('📥 Количество строк:', text.split('\n').length);
+        console.log('📥 Первые 3 строки:');
+        text.split('\n').slice(0, 3).forEach((line, idx) => {
+            console.log(`  ${idx + 1}. "${line}" (длина: ${line.length})`);
+        });
 
         const parsedData = parseDeliveryDates(text);
         

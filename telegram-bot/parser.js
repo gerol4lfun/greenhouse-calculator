@@ -27,16 +27,30 @@ function parseDeliveryLine(line) {
     // Москва с 12.02 (кроме 13.02, 14.02)
     // Питер с 9.02
     
-    // Сначала пробуем формат с запятой
-    let m = line.match(/^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})(?:\s*,\s*кроме\s*(.+))?$/i);
+    // Нормализуем строку перед парсингом
+    const normalizedLine = normalizeText(line);
+    
+    // Сначала пробуем формат с запятой (более специфичный)
+    // Используем \s+ для пробелов (включая любые пробельные символы)
+    let m = normalizedLine.match(/^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})(?:\s*,\s*кроме\s*(.+))?$/i);
     
     // Если не нашли, пробуем формат со скобками
     if (!m) {
-        m = line.match(/^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})(?:\s*\(кроме\s*([^)]+)\))?$/i);
+        m = normalizedLine.match(/^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})(?:\s*\(кроме\s*([^)]+)\))?$/i);
+    }
+    
+    // Если все еще не нашли, пробуем более гибкий паттерн (на случай невидимых символов)
+    if (!m) {
+        // Заменяем все пробельные символы на обычный пробел и пробуем снова
+        const cleanedLine = normalizedLine.replace(/\s+/g, ' ');
+        m = cleanedLine.match(/^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})(?:\s*,\s*кроме\s*(.+))?$/i);
+        if (!m) {
+            m = cleanedLine.match(/^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})(?:\s*\(кроме\s*([^)]+)\))?$/i);
+        }
     }
     
     if (!m) {
-        console.log(`  ❌ Не распознана: "${line}"`);
+        console.log(`  ❌ Не распознана: "${line}" (нормализованная: "${normalizedLine}")`);
         return null;
     }
 
@@ -76,6 +90,24 @@ function parseDeliveryLine(line) {
 }
 
 /**
+ * Нормализует текст: убирает невидимые символы, неразрывные пробелы и т.д.
+ * @param {string} text - Текст для нормализации
+ * @returns {string} Нормализованный текст
+ */
+function normalizeText(text) {
+    if (!text) return text;
+    
+    return text
+        .replace(/\u00A0/g, ' ')      // Неразрывный пробел → обычный пробел
+        .replace(/\u2009/g, ' ')      // Тонкий пробел → обычный пробел
+        .replace(/\u2006/g, ' ')      // Шестипунктовый пробел → обычный пробел
+        .replace(/\u2007/g, ' ')      // Цифровой пробел → обычный пробел
+        .replace(/\u202F/g, ' ')      // Узкий неразрывный пробел → обычный пробел
+        .replace(/\uFEFF/g, '')       // BOM (Byte Order Mark) → удаляем
+        .replace(/[\u200B-\u200D\uFEFF]/g, ''); // Другие невидимые символы → удаляем
+}
+
+/**
  * Парсит текст и извлекает информацию о городах и датах доставки
  * @param {string} text - Текст для парсинга
  * @returns {Array} Массив объектов {city, date, restrictions}
@@ -86,17 +118,34 @@ function parseDeliveryDates(text) {
         return [];
     }
 
+    // Нормализуем текст: убираем невидимые символы
+    const normalizedText = normalizeText(text);
+    
     // ВАЖНО: Делим ТОЛЬКО по переносам строк, НЕ по запятым!
-    const lines = text
+    const lines = normalizedText
         .split(/\r?\n/)          // ✅ только переносы строк
         .map(l => l.trim())
         .filter(Boolean);        // убираем пустые строки
     
     console.log(`🔍 Парсинг: обработано ${lines.length} строк`);
     
+    // Логируем первые 5 строк для отладки
+    console.log('🔍 Первые 5 строк:');
+    lines.slice(0, 5).forEach((line, idx) => {
+        console.log(`  ${idx + 1}. "${line}" (длина: ${line.length}, байты: ${Buffer.from(line, 'utf8').toString('hex').substring(0, 40)})`);
+    });
+    
     const results = lines
-        .map(parseDeliveryLine)
+        .map((line, index) => {
+            const result = parseDeliveryLine(line);
+            if (!result) {
+                console.log(`  ⚠️ Строка ${index + 1} не распознана: "${line.substring(0, 50)}${line.length > 50 ? '...' : ''}"`);
+            }
+            return result;
+        })
         .filter(Boolean);        // убираем null
+    
+    console.log(`✅ Успешно распознано: ${results.length} из ${lines.length} строк`);
     
     // Преобразуем в формат, который ожидает остальной код
     return results.map(item => {
