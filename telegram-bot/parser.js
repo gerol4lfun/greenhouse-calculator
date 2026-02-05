@@ -18,74 +18,70 @@ function normalizeDM(dm) {
 
 /**
  * Парсит одну строку: "Город с ДД.ММ[, кроме ДД.ММ, ДД.ММ]"
+ * Двухшаговый разбор без якоря $ для устойчивости к "Telegram-магии"
  * @param {string} line - Строка для парсинга
  * @returns {Object|null} Объект {city_name, delivery_date, restrictions} или null
  */
 function parseDeliveryLine(line) {
-    // Универсальный паттерн: поддерживает оба формата
-    // Москва с 12.02, кроме 13.02, 14.02
-    // Москва с 12.02 (кроме 13.02, 14.02)
-    // Питер с 9.02
-    
-    // Нормализуем строку перед парсингом
-    const normalizedLine = normalizeText(line);
-    
-    // Сначала пробуем формат с запятой (более специфичный)
-    // Используем \s+ для пробелов (включая любые пробельные символы)
-    let m = normalizedLine.match(/^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})(?:\s*,\s*кроме\s*(.+))?$/i);
-    
-    // Если не нашли, пробуем формат со скобками
-    if (!m) {
-        m = normalizedLine.match(/^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})(?:\s*\(кроме\s*([^)]+)\))?$/i);
-    }
-    
-    // Если все еще не нашли, пробуем более гибкий паттерн (на случай невидимых символов)
-    if (!m) {
-        // Заменяем все пробельные символы на обычный пробел и пробуем снова
-        const cleanedLine = normalizedLine.replace(/\s+/g, ' ');
-        m = cleanedLine.match(/^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})(?:\s*,\s*кроме\s*(.+))?$/i);
-        if (!m) {
-            m = cleanedLine.match(/^(.+?)\s+с\s+(\d{1,2}\.\d{1,2})(?:\s*\(кроме\s*([^)]+)\))?$/i);
-        }
-    }
-    
-    if (!m) {
-        console.log(`  ❌ Не распознана: "${line}" (нормализованная: "${normalizedLine}")`);
+    const raw = line;
+    let s = normalizeText(raw);
+    s = stripLineJunk(s);
+
+    if (!s) return null;
+
+    // 1) сначала достаём: ГОРОД + стартовую дату (без привязки к концу строки)
+    const head = s.match(/^(.+?)\s+(?:с|со)\s+(\d{1,2}[.]\d{1,2})\b/i);
+    if (!head) {
+        console.log(`  ❌ Не распознана: "${raw}" -> "${s}"`);
         return null;
     }
 
-    const city_name = m[1].trim();
-    const delivery_date = normalizeDM(m[2].trim());
+    const city = head[1].trim();
+    const startDate = head[2].trim();
+    const delivery_date = normalizeDM(startDate);
 
+    // 2) затем отдельно ищем блок "кроме ..."
     let restrictions = null;
-    if (m[3]) {
-        // Обрабатываем ограничения
-        const restrictionsText = m[3]
-            .replace(/^\s*кроме\s+/i, '') // на всякий случай убираем "кроме" если есть
+    const lower = s.toLowerCase();
+    const idx = lower.indexOf("кроме");
+    if (idx !== -1) {
+        restrictions = s
+            .slice(idx + "кроме".length)
+            .replace(/^[\s:,-]+/, "")
             .trim();
-        
-        if (restrictionsText.toLowerCase().includes('дату доставки нет') || 
-            restrictionsText.toLowerCase().includes('доставки нет')) {
-            restrictions = restrictionsText;
-        } else {
-            // Это список дат через запятую
-            restrictions = restrictionsText
-                .split(',')
-                .map(s => s.trim())
-                .filter(Boolean)
-                .map(normalizeDM)
-                .join(', '); // ✅ "13.02, 14.02"
+
+        // нормализуем список дат: "13.02, 14.02" / "13.02 и 14.02"
+        if (restrictions) {
+            if (restrictions.toLowerCase().includes('дату доставки нет') || 
+                restrictions.toLowerCase().includes('доставки нет')) {
+                // Оставляем как есть для специальных случаев
+            } else {
+                restrictions = restrictions
+                    .replace(/\s+и\s+/gi, ", ")
+                    .replace(/\s+/g, " ")
+                    .replace(/,+/g, ",")
+                    .replace(/^,|,$/g, "")
+                    .trim();
+                
+                // Разбиваем на даты и нормализуем каждую
+                restrictions = restrictions
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(Boolean)
+                    .map(normalizeDM)
+                    .join(', '); // ✅ "13.02, 14.02"
+            }
         }
         
-        console.log(`  ✅ Найдено с ограничениями: ${city_name} - ${delivery_date}, кроме ${restrictions}`);
+        console.log(`  ✅ Найдено с ограничениями: ${city} - ${delivery_date}, кроме ${restrictions}`);
     } else {
-        console.log(`  ✅ Найдено без ограничений: ${city_name} - ${delivery_date}`);
+        console.log(`  ✅ Найдено без ограничений: ${city} - ${delivery_date}`);
     }
 
     return { 
-        city_name, 
-        delivery_date, 
-        restrictions 
+        city_name: city, 
+        delivery_date: delivery_date, 
+        restrictions: restrictions 
     };
 }
 
@@ -98,13 +94,28 @@ function normalizeText(text) {
     if (!text) return text;
     
     return text
-        .replace(/\u00A0/g, ' ')      // Неразрывный пробел → обычный пробел
-        .replace(/\u2009/g, ' ')      // Тонкий пробел → обычный пробел
-        .replace(/\u2006/g, ' ')      // Шестипунктовый пробел → обычный пробел
-        .replace(/\u2007/g, ' ')      // Цифровой пробел → обычный пробел
-        .replace(/\u202F/g, ' ')      // Узкий неразрывный пробел → обычный пробел
-        .replace(/\uFEFF/g, '')       // BOM (Byte Order Mark) → удаляем
-        .replace(/[\u200B-\u200D\uFEFF]/g, ''); // Другие невидимые символы → удаляем
+        .normalize("NFKC")                 // важное: унификация Unicode
+        .replace(/\r/g, "")                // CR
+        .replace(/\u2028|\u2029/g, "\n")   // Line/Paragraph separator
+        .replace(/\u00A0|\u2009|\u2006|\u2007|\u202F/g, " ")
+        .replace(/\uFEFF/g, "")
+        .replace(/[\u200B-\u200D\uFEFF]/g, "")
+        .replace(/[，]/g, ",")             // "китайская запятая"
+        .replace(/[–—]/g, "-")             // длинные тире
+        .trim();
+}
+
+/**
+ * Убирает маркеры списков и мусор из начала строки
+ * @param {string} line - Строка для очистки
+ * @returns {string} Очищенная строка
+ */
+function stripLineJunk(line) {
+    return line
+        .trim()
+        // убираем маркеры списков в начале: "•", "-", "—", "1)", "1.", "*", "✅" и т.п.
+        .replace(/^[\s>*•·\-–—✅☑️✔️\d\)\.]+/u, "")
+        .trim();
 }
 
 /**
@@ -129,10 +140,19 @@ function parseDeliveryDates(text) {
     
     console.log(`🔍 Парсинг: обработано ${lines.length} строк`);
     
+    // Логируем строки с "кроме" для отладки
+    const suspicious = lines.filter(l => /кроме/i.test(l));
+    console.log(`[DEBUG] lines_with_krome=${suspicious.length}`);
+    suspicious.slice(0, 20).forEach((l, i) => {
+        const n = normalizeText(l);
+        console.log(`  [krome ${i}] raw="${l}"`);
+        console.log(`  [krome ${i}] norm="${n}"`);
+    });
+    
     // Логируем первые 5 строк для отладки
     console.log('🔍 Первые 5 строк:');
     lines.slice(0, 5).forEach((line, idx) => {
-        console.log(`  ${idx + 1}. "${line}" (длина: ${line.length}, байты: ${Buffer.from(line, 'utf8').toString('hex').substring(0, 40)})`);
+        console.log(`  ${idx + 1}. "${line}" (длина: ${line.length})`);
     });
     
     const results = lines

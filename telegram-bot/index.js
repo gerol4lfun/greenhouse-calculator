@@ -10,6 +10,18 @@ const TelegramBot = require('node-telegram-bot-api');
 const { parseDeliveryDates, formatParsedResults } = require('./parser');
 const { initSupabase, updateDeliveryDates } = require('./supabase');
 
+// Версионирование для отладки
+const APP_VERSION = process.env.APP_VERSION || "v186-bot";
+const BUILD_SHA =
+    process.env.RAILWAY_GIT_COMMIT_SHA ||
+    process.env.GITHUB_SHA ||
+    process.env.SOURCE_VERSION ||
+    "unknown";
+
+console.log(
+    `[BOOT] app=${APP_VERSION} sha=${BUILD_SHA} node=${process.version} cwd=${process.cwd()} file=${__filename}`
+);
+
 // Проверка переменных окружения
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -39,6 +51,14 @@ try {
 }
 
 console.log('🤖 Бот запущен и готов к работе!');
+
+// Команда /version
+bot.onText(/\/version/i, (msg) => {
+    bot.sendMessage(
+        msg.chat.id,
+        `app=${APP_VERSION}\nsha=${BUILD_SHA}\nnode=${process.version}`
+    );
+});
 
 // Команда /start
 bot.onText(/\/start/, (msg) => {
@@ -101,7 +121,8 @@ bot.onText(/\/help/, (msg) => {
 // Обработка текстовых сообщений
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
-    const text = msg.text;
+    // Обрабатываем как msg.text, так и msg.caption (если текст прикреплен к файлу/картинке)
+    const text = msg.text || msg.caption || "";
 
     // Пропускаем команды
     if (text && text.startsWith('/')) {
