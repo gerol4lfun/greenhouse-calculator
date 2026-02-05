@@ -1,7 +1,7 @@
 
 // Константа для контроля отладки
 const DEBUG = false; // Отключено для продакшена
-const APP_VERSION = "v147"; // v147: исправление критических багов (перезапись additionalProductsText, доставка во втором варианте, округление)
+const APP_VERSION = "v149"; // v149: исправлен сброс всех фильтров (теперь сбрасываются дополнительные товары, доставка, грядки и все опции)
 
 // ==================== СИСТЕМА УВЕДОМЛЕНИЙ (TOAST) ====================
 
@@ -1336,19 +1336,27 @@ function resetDropdown(elementId, placeholderText) {
 
 // Функция сброса дополнительных опций
 function resetAdditionalOptions() {
-    const additionalProducts = document.querySelectorAll('.additional-products input[type="checkbox"]');
-    additionalProducts.forEach(checkbox => {
-        if (checkbox) {
-            checkbox.checked = false;
-        }
-    });
-
+    // Сбрасываем чекбоксы дополнительных услуг
     const additionalServices = document.querySelectorAll('.additional-services input[type="checkbox"]');
     additionalServices.forEach(checkbox => {
         if (checkbox) {
             checkbox.checked = false;
         }
     });
+
+    // Сбрасываем select'ы для дополнительных товаров (количество = 0)
+    const additionalProductSelects = document.querySelectorAll('.additional-products select');
+    additionalProductSelects.forEach(select => {
+        if (select) {
+            select.value = "0";
+        }
+    });
+
+    // Сбрасываем чекбокс сборки теплицы
+    const assemblyCheckbox = document.getElementById('assembly');
+    if (assemblyCheckbox) {
+        assemblyCheckbox.checked = false;
+    }
 }
 
 // Функция получения категории сборки на основе формы и ширины
@@ -2897,7 +2905,8 @@ function copyCommercialOffer() {
 
 // Функция сброса всех фильтров
 function resetAllFilters() {
-    // Сбрасываем выпадающие списки
+    // Сбрасываем выпадающие списки основных параметров
+    resetDropdown('city', 'Выберите город');
     resetDropdown('form', 'Сначала выберите город');
     resetDropdown('width', 'Сначала выберите форму');
     resetDropdown('length', 'Сначала выберите ширину');
@@ -2905,13 +2914,50 @@ function resetAllFilters() {
     resetDropdown('arcStep', 'Выберите шаг');
     resetDropdown('polycarbonate', 'Сначала выберите город');
 
-    // Сбрасываем все чекбоксы
+    // Сбрасываем все дополнительные опции (чекбоксы и select'ы)
     resetAdditionalOptions();
     
     // Сбрасываем грядки
     selectedBeds = {};
     localStorage.setItem('selectedBeds', JSON.stringify(selectedBeds));
+    
+    // Сбрасываем сборку грядок
+    bedsAssemblyEnabled = false;
+    localStorage.setItem('bedsAssemblyEnabled', 'false');
+    const bedsAssemblyCheckbox = document.getElementById('beds-assembly-checkbox');
+    if (bedsAssemblyCheckbox) {
+        bedsAssemblyCheckbox.checked = false;
+    }
     updateBedsCounter();
+
+    // Сбрасываем доставку
+    const addressInput = document.getElementById("address");
+    if (addressInput) {
+        addressInput.value = "";
+    }
+    
+    // Сбрасываем радиокнопки доставки (без сборки)
+    const deliveryTypeRadios = document.querySelectorAll('input[name="deliveryType"]');
+    if (deliveryTypeRadios.length > 0) {
+        deliveryTypeRadios[0].checked = true; // Первая радиокнопка (без сборки)
+    }
+    
+    // Очищаем результат доставки
+    const resultDiv = document.getElementById("result");
+    if (resultDiv) {
+        resultDiv.innerText = "";
+    }
+
+    // Очищаем карту
+    if (mapInstance && currentRoute) {
+        mapInstance.geoObjects.remove(currentRoute);
+        currentRoute = null;
+    }
+
+    // Сброс глобальной переменной стоимости доставки
+    deliveryCost = 0;
+    currentDeliveryDate = null;
+    updateDeliveryDateDisplay();
 
     // Сбрасываем текст КП и результатов
     const shortOfferTextarea = document.getElementById("commercial-offer-short");
@@ -2927,15 +2973,11 @@ function resetAllFilters() {
     // Возвращаем активной вкладку "Короткое КП"
     setOfferTab('short');
     
-    document.getElementById("result").innerText = "";
-
-    // Очищаем карту
-    if (mapInstance && currentRoute) {
-        mapInstance.geoObjects.remove(currentRoute);
+    // Очищаем подсказки адреса
+    const suggestionsDiv = document.getElementById("suggestions");
+    if (suggestionsDiv) {
+        suggestionsDiv.innerHTML = "";
     }
-
-    // Сброс глобальной переменной стоимости доставки
-    deliveryCost = 0;
 }
 
 // Функция сброса доставки
