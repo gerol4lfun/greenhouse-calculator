@@ -1,7 +1,7 @@
 
 // Константа для контроля отладки
 const DEBUG = false; // Отключено для продакшена
-const APP_VERSION = "v153"; // v153: исправлено расположение кнопок через flexbox контейнер, кнопка "Выйти" больше не исчезает
+const APP_VERSION = "v186"; // v186: Подарки с маленькой буквы для гармоничного вида, все исправления v185 работают // v185: Подарки в одну строку через запятую, исправлены отступы, исправлена логика скрытия подарков
 
 // ==================== СИСТЕМА УВЕДОМЛЕНИЙ (TOAST) ====================
 
@@ -16,7 +16,6 @@ function showToast(message, type = 'info', title = null, duration = 4000) {
     const container = document.getElementById('toast-container');
     if (!container) {
         // Если контейнер не найден, используем fallback на alert
-        console.warn('Toast container not found, using alert fallback');
         alert(message);
         return;
     }
@@ -218,7 +217,6 @@ if (typeof window.showFAQModal === 'undefined') {
 // Временная заглушка для showBedsModal (на случай, если скрипт еще не загрузился)
 if (typeof window.showBedsModal === 'undefined') {
     window.showBedsModal = function() {
-        console.warn("⚠️ showBedsModal еще не загружена, ждем загрузки скрипта...");
         setTimeout(() => {
             if (typeof showBedsModal === 'function') {
                 showBedsModal();
@@ -311,11 +309,7 @@ function findCityInDropdown(cityName) {
     return null;
 }
 
-// Пользователи (СТАРАЯ СИСТЕМА УДАЛЕНА - больше не используется!)
-// ВСЕ пароли теперь хранятся ТОЛЬКО в Supabase в таблице users
-// Этот массив оставлен для справки, но не используется для авторизации
-// УДАЛИТЕ ЭТОТ МАССИВ, ЕСЛИ ХОТИТЕ ПОЛНОСТЬЮ УБРАТЬ СТАРЫЕ ПАРОЛИ ИЗ КОДА
-const users = []; // Пустой массив - старая система отключена
+// Пользователи: все пароли хранятся в Supabase в таблице users
 
 // Ключ для админа в localStorage (для доступа к админ-панели)
 const ADMIN_KEY = 'admin_access_granted';
@@ -975,8 +969,7 @@ async function loadCities() {
                 if (cityDropdown) {
                     cityDropdown.innerHTML = '<option value="" disabled selected>Ошибка загрузки данных</option>';
                 }
-                // Не показываем alert для сетевых ошибок, просто логируем
-                console.warn("Не удалось загрузить города. Возможно, проблема с подключением к Supabase.");
+                // Не показываем alert для сетевых ошибок
             return;
         }
 
@@ -992,8 +985,7 @@ async function loadCities() {
             if (cityDropdown) {
                 cityDropdown.innerHTML = '<option value="" disabled selected>Ошибка загрузки данных</option>';
             }
-            // Не показываем alert для сетевых ошибок, просто логируем
-            console.warn("Не удалось загрузить города. Возможно, проблема с подключением к Supabase.");
+            // Не показываем alert для сетевых ошибок
             return;
         }
     }
@@ -1298,6 +1290,9 @@ function onLengthChange() {
 
     // Сброс дополнительных опций
     resetAdditionalOptions();
+    
+    // Предварительное обновление блока подарков (если все параметры выбраны)
+    updateGiftsBlockPreview();
 }
 
 // Функция обработки изменения каркаса
@@ -1306,6 +1301,9 @@ function onFrameChange() {
     // Например, обновление шага дуг на основе выбранного каркаса
     resetDropdown('arcStep', 'Выберите шаг');
     resetAdditionalOptions();
+    
+    // Предварительное обновление блока подарков (если все параметры выбраны)
+    updateGiftsBlockPreview();
 }
 
 // Функция сброса выпадающих списков
@@ -1327,6 +1325,25 @@ function resetDropdown(elementId, placeholderText) {
             }
             if (!standardFound && options.length > 1) {
                 dropdown.selectedIndex = 1; // Выбираем первый доступный вариант, если "Стандарт 4 мм" не найден
+            }
+        } else if (elementId === 'city') {
+            // ВАЖНО: Для города НЕ очищаем список, только сбрасываем выбор
+            // Если список пустой, восстанавливаем из кеша
+            if (dropdown.options.length <= 1 && citiesCache && citiesCache.length > 0) {
+                // Восстанавливаем список из кеша
+                dropdown.innerHTML = '<option value="" disabled selected>Выберите город</option>';
+                citiesCache.forEach(city => {
+                    dropdown.innerHTML += `<option value="${city}">${city}</option>`;
+                });
+            } else {
+                // Просто сбрасываем выбор на placeholder
+                dropdown.value = "";
+                // Убеждаемся, что есть placeholder
+                if (dropdown.options.length === 0 || dropdown.options[0].value !== "") {
+                    dropdown.innerHTML = `<option value="" disabled selected>${placeholderText}</option>`;
+                } else {
+                    dropdown.selectedIndex = 0;
+                }
             }
         } else {
             dropdown.innerHTML = `<option value="" disabled selected>${placeholderText}</option>`;
@@ -1733,11 +1750,24 @@ if (additionalProducts.length > 0) {
     }
     summaryText += `\nИтоговая стоимость - ${formatPrice(finalTotalPrice)} рублей`;
 
+    // Сохраняем последнюю рассчитанную цену для использования в onGiftChange()
+    lastCalculatedPrice = finalTotalPrice;
+    
     // Генерация коммерческого предложения (длинное КП)
     await generateCommercialOffer(basePrice, assemblyCost, foundationCost, additionalProducts, additionalProductsCost, deliveryPrice, finalTotalPrice, selectedEntry, basePriceText, assemblyText, foundationText, additionalProductsText, snowLoadFinalText);
     
     // Генерация короткого КП
     await generateShortOffer(finalTotalPrice, selectedEntry);
+    
+    // Обновление блока подарков на основе итоговой суммы
+    updateGiftsBlock(finalTotalPrice);
+    
+    // ВАЖНО: Авто-обновление КП с подарками сразу после первого расчёта
+    // (если подарки уже были выбраны ранее и лежат в localStorage)
+    const savedGifts = JSON.parse(localStorage.getItem('selectedGifts') || '{}');
+    if (Object.keys(savedGifts).length > 0) {
+        updateCommercialOffersWithGifts(savedGifts);
+    }
     
     // Устанавливаем активной вкладку "Короткое КП" после расчёта
     setOfferTab('short');
@@ -2014,6 +2044,7 @@ async function generateCommercialOffer(basePrice, assemblyCost, foundationCost, 
     if (additionalProductsText) {
         commercialOffer += `\n${additionalProductsText}\n`;
     }
+    
     if (deliveryPrice > 0) {
         commercialOffer += `\nДоставка - ${formatPrice(deliveryPrice)} рублей\n`;
     }
@@ -2044,17 +2075,19 @@ async function generateCommercialOffer(basePrice, assemblyCost, foundationCost, 
     const year = expirationDate.getFullYear();
     const formattedDate = `${day}.${month}.${year}`;
     
-    // Если сумма больше 35000 рублей - используем расширенный формат с подарком
+    // Подарки НЕ добавляются здесь - они добавляются через updateCommercialOffersWithGifts()
+    // Это предотвращает дублирование подарков в КП
+    
+    // Если сумма больше 35000 рублей - используем расширенный формат
     if (finalTotalPrice > 35000) {
-        commercialOffer += `\nИтого: ${formatPrice(finalTotalPrice)} рублей\n\n` +
-            `💳 Без предоплаты — оплата по факту.\n` +
-            `🎁 Вам доступен подарок.\n` +
+        commercialOffer += `\nИтого: ${formatPrice(finalTotalPrice)} рублей\n`;
+        commercialOffer += `💳 Без предоплаты — оплата по факту.\n` +
             `🌱 Бесплатное хранение до весны с сохранением цены.\n` +
             `⏳ Предложение действительно до ${formattedDate}.`;
     } else {
         // Если сумма 35000 и меньше - стандартный формат
-        commercialOffer += `\nИтоговая стоимость - ${formatPrice(finalTotalPrice)} рублей\n\n` +
-            `💳 Без предоплаты — оплата по факту\n` +
+        commercialOffer += `\nИтоговая стоимость - ${formatPrice(finalTotalPrice)} рублей\n`;
+        commercialOffer += `💳 Без предоплаты — оплата по факту\n` +
             `🌱 Бесплатное хранение до весны с сохранением цены.\n\n` +
             `⏳ Предложение действительно до ${formattedDate}`;
     }
@@ -2912,10 +2945,8 @@ async function generateShortOffer(finalTotalPrice1, selectedEntry) {
     // Условия оплаты - лаконично, без лишних эмодзи
     shortOffer += `\nБез предоплаты. Гарантия 15 лет. Бесплатная заморозка стоимости.\n`;
     
-    // Подарок - если есть
-    if (finalTotalPrice1 >= 35000) {
-        shortOffer += `🎁 Вам доступен подарок.\n`;
-    }
+    // Подарки НЕ добавляются здесь - они добавляются через updateCommercialOffersWithGifts()
+    // Это предотвращает дублирование подарков в КП
     
     // Дата доставки - просто информация, без призыва к действию
     let deliveryDateText = "17 февраля"; // По умолчанию
@@ -3033,9 +3064,23 @@ function copyCommercialOffer() {
 }
 
 // Функция сброса всех фильтров
-function resetAllFilters() {
-    // Сбрасываем выпадающие списки основных параметров
+async function resetAllFilters() {
+    // ВАЖНО: Сначала сбрасываем город, но сохраняем список городов
     resetDropdown('city', 'Выберите город');
+    
+    // Если список городов пустой, загружаем его заново
+    const cityDropdown = document.getElementById('city');
+    if (cityDropdown && (cityDropdown.options.length <= 1 || !citiesCache)) {
+        await loadCities();
+    } else if (cityDropdown && citiesCache && cityDropdown.options.length <= 1) {
+        // Восстанавливаем список из кеша
+        cityDropdown.innerHTML = '<option value="" disabled selected>Выберите город</option>';
+        citiesCache.forEach(city => {
+            cityDropdown.innerHTML += `<option value="${city}">${city}</option>`;
+        });
+    }
+    
+    // Сбрасываем остальные выпадающие списки
     resetDropdown('form', 'Сначала выберите город');
     resetDropdown('width', 'Сначала выберите форму');
     resetDropdown('length', 'Сначала выберите ширину');
@@ -3849,6 +3894,25 @@ if (document.readyState === 'loading') {
     initFAQModal();
 }
 
+// Инициализация модального окна с информацией о подарках
+function initGiftsInfoModal() {
+    const modal = document.getElementById('gifts-info-modal');
+    if (!modal) return;
+    
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            closeGiftsInfoModal();
+        }
+    });
+}
+
+// Инициализируем модальное окно с информацией о подарках при загрузке
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGiftsInfoModal);
+} else {
+    initGiftsInfoModal();
+}
+
 // ==================== FAQ (Часто задаваемые вопросы) ====================
 // ВАЖНО: FAQ для внутренних нужд (не отправлять клиентам!)
 
@@ -4086,8 +4150,8 @@ const faqData = {
         },
         {
             category: "payment",
-            question: "Система подарков",
-            answer: "Как начисляются подарки от суммы заказа:\n\n📌 При заказе от 35 000₽ — 1 подарок на выбор:\n- Дополнительная форточка\n- Капельный полив (механический)\n\n📌 При заказе от 50 000₽ — 2 подарка (или 1 комбо-набор):\n- 2 форточки\n- 2 капельных полива\n- 1 форточка + 1 капельный полив\n\n📌 На каждые 50 000₽ в заказе добавляется ещё 2 подарка\n\nПримеры:\n- Заказ 43 000₽ → 1 подарок (по уровню 35 000₽)\n- Заказ 86 000₽ → 3 подарка (2 за 50к + 1 за 35к)\n- Заказ 150 000₽ → 6 подарков (по 2 за каждые 50к)\n\n⚠️ ВАЖНО: Если не указать подарок в таблице — клиент его не получит!"
+            question: "Система подарков (актуальная логика)",
+            answer: "📊 Количество подарков по сумме заказа:\n\n• От 35 000 рублей — 1 подарок (по умолчанию: дополнительная форточка)\n• От 55 000 рублей — 2 подарка (по умолчанию: форточка + капельный полив)\n• От 75 000 рублей — 3 подарка (по умолчанию: форточка + капельный полив + автомат для форточки)\n\n🔄 Правила замены подарков:\n\n• Любой подарок можно заменить на 4 грунтозацепа\n• Капельный полив можно заменить на вторую форточку (при условии соблюдения суммы заказа)\n• Максимум 3 подарка — даже если сумма очень большая, больше 3 подарков не будет\n\n⚙️ Особенности:\n\n• \"Автоматическая форточка\" занимает 2 слота подарка — это форточка + автомат в одном подарке. Если вы выбрали её в подарке 1, то подарок 2 автоматически скрывается.\n• Автомат для форточки можно выбрать только если есть дополнительная форточка — либо купленная в разделе \"Дополнительные товары\", либо выбранная в подарках.\n• Если форточка выбрана или куплена, автомат становится доступен во ВСЕХ подарках — можно выбрать автомат в любом доступном подарке.\n\n💡 Примеры:\n\nПример 1: Заказ на 60 000 рублей (2 подарка)\n• Подарок 1: Дополнительная форточка\n• Подарок 2: Капельный полив механический\n\nИли можно заменить:\n• Подарок 1: Автоматическая форточка (форточка + автомат) — подарок 2 скрывается\n• Подарок 2: Недоступен (занят автоматической форточкой)\n\nПример 2: Заказ на 80 000 рублей (3 подарка)\n• Подарок 1: Дополнительная форточка\n• Подарок 2: Капельный полив механический\n• Подарок 3: Автомат для форточки (стал доступен, так как форточка выбрана в подарке 1)\n\nПример 3: Заказ на 80 000 рублей + куплена форточка\n• Куплена дополнительная форточка в разделе \"Дополнительные товары\"\n• Подарок 1: Автомат для форточки (стал доступен во всех подарках)\n• Подарок 2: Капельный полив механический\n• Подарок 3: Автомат для форточки (можно выбрать второй автомат, если нужно)\n\nПример 4: Все подарки заменены на грунтозацепа\n• Подарок 1: 4 грунтозацепа\n• Подарок 2: 4 грунтозацепа\n• Подарок 3: 4 грунтозацепа\n• Итого: 12 грунтозацепов в подарок\n\n⚠️ ВАЖНО: Если не указать подарок в таблице заказов — клиент его не получит!"
         },
         {
             category: "payment",
@@ -5419,7 +5483,6 @@ function getRecommendedBeds(height) {
         }
         
         // Если все равно не хватает, возвращаем null (рекомендация не показывается)
-        console.warn(`⚠️ Для теплицы ${width}×${length} м не хватает места для рекомендуемых грядок (нужно минимум ${(totalBedsWidth + minTotalPassages).toFixed(2)} м ширины)`);
         return null;
     }
     
@@ -5947,6 +6010,994 @@ window.applyRecommendedBeds = applyRecommendedBeds;
 window.clearAllBeds = clearAllBeds;
 window.updateBedsClearButton = updateBedsClearButton;
 window.downloadBedImage = downloadBedImage;
+
+// ==================== ФУНКЦИИ ДЛЯ ПОДАРКОВ ====================
+
+/**
+ * Проверяет, занят ли слот подарка из-за выбора "Автоматической форточки" в предыдущих слотах
+ * @param {number} giftNumber - Номер подарка (1, 2, 3)
+ * @param {Object} selectedGifts - Объект с уже выбранными подарками
+ * @returns {boolean} true, если слот занят
+ */
+function isGiftSlotOccupied(giftNumber, selectedGifts) {
+    // Если выбран window-auto в подарке 1, то подарок 2 занят
+    if (giftNumber === 2 && selectedGifts['gift-1'] === 'window-auto') {
+        return true;
+    }
+    // Если выбран window-auto в подарке 2, то подарок 3 занят
+    if (giftNumber === 3 && selectedGifts['gift-2'] === 'window-auto') {
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Получает доступные варианты для подарка на основе уже выбранных подарков
+ * @param {number} giftNumber - Номер подарка (1, 2, 3)
+ * @param {Object} selectedGifts - Объект с уже выбранными подарками
+ * @param {boolean} hasAdditionalWindow - Есть ли дополнительная форточка (купленная или в подарке)
+ * @param {number} availableGifts - Количество доступных подарков (1, 2 или 3)
+ * @returns {Array} Массив вариантов подарков
+ */
+function getGiftOptions(giftNumber, selectedGifts, hasAdditionalWindow, availableGifts = 3) {
+    const options = [];
+    
+    // Всегда добавляем опцию "Без подарка"
+    options.push({ value: '', text: 'Без подарка' });
+    
+    // Проверяем, выбрана ли форточка в ДРУГИХ подарках (не в текущем)
+    const otherGifts = Object.entries(selectedGifts).filter(([key, value]) => key !== `gift-${giftNumber}`);
+    const hasWindowInOtherGifts = otherGifts.some(([key, value]) => 
+        value === 'window' || value === 'window-auto');
+    
+    // Проверяем, есть ли форточка (купленная или в любом подарке)
+    const hasWindow = hasAdditionalWindow || hasWindowInOtherGifts || 
+                     selectedGifts[`gift-${giftNumber}`] === 'window' ||
+                     selectedGifts[`gift-${giftNumber}`] === 'window-auto';
+    
+    if (giftNumber === 1) {
+        // Первый подарок: форточка, автоматическая форточка (если доступно 2+ подарка) или 4 грунтозацепа
+        options.push({ value: 'window', text: 'Дополнительная форточка' });
+        // Если доступно 2+ подарка, предлагаем автоматическую форточку (занимает 2 слота)
+        if (availableGifts >= 2) {
+            options.push({ value: 'window-auto', text: 'Автоматическая форточка (форточка + автомат)' });
+        }
+        options.push({ value: 'stakes-4', text: '4 грунтозацепа' });
+    } else if (giftNumber === 2) {
+        // Второй подарок: капельный полив механический, вторая форточка, автомат (если есть форточка) или 4 грунтозацепа
+        options.push({ value: 'drip-mech', text: 'Капельный полив механический' });
+        options.push({ value: 'window', text: 'Дополнительная форточка' });
+        
+        // ИСПРАВЛЕНО: Проверяем, выбран ли автомат в других подарках
+        const hasAutomationInOtherGifts = otherGifts.some(([key, value]) => value === 'window-automation' || value === 'window-auto');
+        
+        // Если есть форточка (купленная или в любом подарке) И автомат еще НЕ выбран - предлагаем автомат
+        if (hasWindow && !hasAutomationInOtherGifts) {
+            options.push({ value: 'window-automation', text: 'Автомат для форточки' });
+        }
+        
+        // Если доступно 3 подарка и в первом не выбрана window-auto, предлагаем автоматическую форточку
+        if (availableGifts >= 3 && selectedGifts['gift-1'] !== 'window-auto') {
+            options.push({ value: 'window-auto', text: 'Автоматическая форточка (форточка + автомат)' });
+        }
+        options.push({ value: 'stakes-4', text: '4 грунтозацепа' });
+    } else if (giftNumber === 3) {
+        // Третий подарок: автомат для форточки (если есть доп форточка), капельный полив или 4 грунтозацепа
+        // ИСПРАВЛЕНО: Проверяем, выбран ли автомат в других подарках
+        const hasAutomationInOtherGifts = otherGifts.some(([key, value]) => value === 'window-automation' || value === 'window-auto');
+        
+        // Если выбран автомат в другом подарке, предлагаем капельный полив
+        if (hasAutomationInOtherGifts) {
+            options.push({ value: 'drip-mech', text: 'Капельный полив механический' });
+        }
+        
+        // Если есть форточка (купленная или в любом подарке) И автомат еще НЕ выбран - предлагаем автомат
+        if (hasWindow && !hasAutomationInOtherGifts) {
+            options.push({ value: 'window-automation', text: 'Автомат для форточки' });
+        }
+        
+        options.push({ value: 'stakes-4', text: '4 грунтозацепа' });
+    }
+    
+    return options;
+}
+
+/**
+ * Обновляет блок подарков на основе итоговой суммы заказа
+ * @param {number} totalPrice - Итоговая сумма заказа
+ * @param {Object} overrideSelectedGifts - Опционально: переопределить выбранные подарки (для немедленного обновления)
+ */
+function updateGiftsBlock(totalPrice, overrideSelectedGifts = null) {
+    const giftsBlock = document.getElementById('gifts-block');
+    const giftsInfo = document.getElementById('gifts-info');
+    const giftsSelection = document.getElementById('gifts-selection');
+    
+    if (!giftsBlock || !giftsInfo || !giftsSelection) {
+        return;
+    }
+    
+    // Определяем количество доступных подарков
+    let availableGifts = 0;
+    let giftTier = '';
+    
+    if (totalPrice >= 75000) {
+        availableGifts = 3;
+        giftTier = 'от 75 000 рублей';
+    } else if (totalPrice >= 55000) {
+        availableGifts = 2;
+        giftTier = 'от 55 000 рублей';
+    } else if (totalPrice >= 35000) {
+        availableGifts = 1;
+        giftTier = 'от 35 000 рублей';
+    }
+    
+    // Если подарков нет, скрываем блок
+    if (availableGifts === 0) {
+        giftsBlock.style.display = 'none';
+        return;
+    }
+    
+    // Показываем блок
+    giftsBlock.style.display = 'block';
+    
+    // Обновляем информацию
+    giftsInfo.innerHTML = `
+        <strong>Вам доступно ${availableGifts} ${availableGifts === 1 ? 'подарок' : availableGifts === 2 ? 'подарка' : 'подарков'}</strong> (${giftTier})
+    `;
+    
+    // ИСПРАВЛЕНО: Упрощены источники данных - используем ТОЛЬКО DOM как источник истины
+    // Если передан overrideSelectedGifts, используем его, иначе читаем из DOM
+    let finalSelectedGifts = {};
+    
+    if (overrideSelectedGifts) {
+        // Если передан overrideSelectedGifts, используем его
+        finalSelectedGifts = { ...overrideSelectedGifts };
+    } else {
+        // Иначе читаем ТОЛЬКО из DOM (самый надежный источник)
+        const existingSelects = document.querySelectorAll('.gift-select');
+        existingSelects.forEach(select => {
+            const giftItem = select.closest('.gift-item');
+            // Сохраняем только видимые элементы с непустыми значениями
+            if (giftItem) {
+                const computedStyle = window.getComputedStyle(giftItem);
+                if (computedStyle.display !== 'none' && computedStyle.visibility !== 'hidden') {
+                    if (select.value && select.value.trim() !== '') {
+                        finalSelectedGifts[select.id] = select.value;
+                    }
+                }
+            }
+        });
+        
+        // Если в DOM ничего не найдено, пробуем localStorage (только для восстановления между сессиями)
+        if (Object.keys(finalSelectedGifts).length === 0) {
+            const savedGifts = JSON.parse(localStorage.getItem('selectedGifts') || '{}');
+            finalSelectedGifts = { ...savedGifts };
+        }
+    }
+    
+    // Очищаем подарки, которые больше не доступны (если количество подарков уменьшилось)
+    for (let i = availableGifts + 1; i <= 3; i++) {
+        delete finalSelectedGifts[`gift-${i}`];
+    }
+    
+    // Также очищаем пустые значения (если пользователь выбрал "Без подарка")
+    Object.keys(finalSelectedGifts).forEach(key => {
+        if (!finalSelectedGifts[key] || finalSelectedGifts[key].trim() === '') {
+            delete finalSelectedGifts[key];
+        }
+    });
+    
+    // Проверяем, есть ли дополнительная форточка (купленная или в подарке)
+    const additionalWindowQty = parseInt(document.getElementById('additional-window-qty')?.value || '0', 10);
+    // Проверяем, выбрана ли форточка в ЛЮБОМ подарке (включая автоматическую форточку)
+    const hasWindowInGifts = Object.values(finalSelectedGifts).includes('window') || 
+                             Object.values(finalSelectedGifts).includes('window-auto');
+    const hasAdditionalWindow = additionalWindowQty > 0 || hasWindowInGifts;
+    
+    // ВАЖНО: ВСЕГДА полностью пересоздаем блок, чтобы избежать проблем с остатками старых элементов
+    // Это гарантирует, что блок всегда соответствует текущему состоянию
+    giftsSelection.innerHTML = '';
+    
+    // Теперь создаем элементы для каждого доступного подарка
+    for (let i = 1; i <= availableGifts; i++) {
+        // Проверяем, занят ли этот слот из-за выбора "Автоматической форточки" в предыдущем слоте
+        if (isGiftSlotOccupied(i, finalSelectedGifts)) {
+            continue; // Слот занят - не создаем
+        }
+        
+        const giftItem = document.createElement('div');
+        giftItem.className = 'gift-item';
+        
+        const giftSelect = document.createElement('select');
+        giftSelect.id = `gift-${i}`;
+        giftSelect.className = 'gift-select';
+        
+        // Получаем варианты для этого подарка
+        const giftOptions = getGiftOptions(i, finalSelectedGifts, hasAdditionalWindow, availableGifts);
+        
+        // Заполняем select
+        giftOptions.forEach(option => {
+            const optionElement = document.createElement('option');
+            optionElement.value = option.value;
+            optionElement.textContent = option.text;
+            giftSelect.appendChild(optionElement);
+        });
+        
+        // Восстанавливаем выбранное значение (из finalSelectedGifts)
+        if (finalSelectedGifts[`gift-${i}`]) {
+            const selectedValue = finalSelectedGifts[`gift-${i}`];
+            if (giftSelect.querySelector(`option[value="${selectedValue}"]`)) {
+                giftSelect.value = selectedValue;
+            }
+        }
+        
+        // Устанавливаем обработчик ПОСЛЕ заполнения опций и восстановления значения
+        giftSelect.onchange = () => {
+            onGiftChange();
+        };
+        
+        // Создаем структуру
+        const giftLabel = document.createElement('div');
+        giftLabel.className = 'gift-label';
+        
+        const giftName = document.createElement('span');
+        giftName.className = 'gift-name';
+        giftName.textContent = `Подарок ${i}`;
+        
+        giftLabel.appendChild(giftSelect);
+        giftLabel.appendChild(giftName);
+        giftItem.appendChild(giftLabel);
+        
+        giftsSelection.appendChild(giftItem);
+    }
+    
+    // Сохраняем финальные выбранные подарки в localStorage (для восстановления между сессиями)
+    localStorage.setItem('selectedGifts', JSON.stringify(finalSelectedGifts));
+}
+
+/**
+ * ПЕРЕСОБИРАЕТ короткое КП из частей с правильными подарками
+ * НОВЫЙ ПОДХОД: вместо удаления/вставки через regex пересобираем КП заново
+ * Это надежнее и предотвращает "галлюцинации" при разных комбинациях подарков
+ */
+function rebuildShortOfferWithGifts(overrideSelectedGifts = null) {
+    const shortOfferTextarea = document.getElementById("commercial-offer-short");
+    if (!shortOfferTextarea || !shortOfferTextarea.value || shortOfferTextarea.value.trim() === '' || 
+        shortOfferTextarea.value.includes("Здесь будет ваше")) {
+        return; // Если КП еще не сгенерировано, ничего не делаем
+    }
+    
+    // Читаем текущее КП и разбираем его на части
+    let currentOffer = shortOfferTextarea.value;
+    
+    // ИСПРАВЛЕНО: Удаляем ВСЕ старые блоки подарков перед пересборкой
+    // Это устраняет дублирование и "галлюцинации"
+    // Удаляем все возможные варианты блока подарков (с любым склонением)
+    currentOffer = currentOffer.replace(/\n🎁 Подарок[аи]?[к]?:[\s\S]*?(?=\n+Ближайшая дата доставки|\n+💳|$)/g, '');
+    // Также удаляем одиночные строки с 🎁
+    currentOffer = currentOffer.replace(/\n🎁[^\n]*\n/g, '');
+    // Удаляем множественные пустые строки
+    currentOffer = currentOffer.replace(/\n{3,}/g, '\n\n');
+    
+    // ИСПРАВЛЕНО: Более надежное извлечение частей КП
+    // Ищем "Бесплатная заморозка стоимости." - это всегда есть в коротком КП
+    const warrantyMatch = currentOffer.match(/Бесплатная заморозка стоимости\./);
+    if (!warrantyMatch) {
+        // Если не найдено, пробуем найти через "Гарантия 15 лет"
+        const guaranteeMatch = currentOffer.match(/Гарантия 15 лет\./);
+        if (!guaranteeMatch) {
+            return; // Если структура КП неожиданная, не трогаем
+        }
+        // Используем гарантию как маркер
+        const beforeGifts = currentOffer.substring(0, guaranteeMatch.index + guaranteeMatch[0].length);
+        const afterGuarantee = currentOffer.substring(guaranteeMatch.index + guaranteeMatch[0].length);
+        
+        // Ищем дату доставки
+        const deliveryMatch = afterGuarantee.match(/Ближайшая дата доставки[^\n]*/);
+        let datePart = '';
+        if (deliveryMatch) {
+            datePart = '\n' + deliveryMatch[0].trim();
+            if (!datePart.endsWith('.')) datePart += '.';
+        } else {
+            let deliveryDateText = "17 февраля";
+            if (currentDeliveryDate) {
+                const currentYear = new Date().getFullYear();
+                deliveryDateText = currentDeliveryDate + "." + currentYear;
+            }
+            datePart = '\nБлижайшая дата доставки — ' + deliveryDateText + '.';
+        }
+        
+        // Получаем текст подарков
+        let giftsText = '';
+        if (overrideSelectedGifts && Object.keys(overrideSelectedGifts).length > 0) {
+            giftsText = getGiftsTextFromObject(overrideSelectedGifts);
+        } else {
+            giftsText = getGiftsText();
+        }
+        
+        // Пересобираем КП: до условий + условия + отступ + подарки (если есть) + отступ + дата
+        let newOffer = beforeGifts;
+        if (giftsText && giftsText.trim() !== '') {
+            // ИСПРАВЛЕНО: Подарки вставляются с одним отступом (пустая строка перед блоком)
+            newOffer += '\n' + giftsText.trimStart() + '\n';
+        }
+        newOffer += datePart;
+        shortOfferTextarea.value = newOffer;
+        return;
+    }
+    
+    // Часть до условий оплаты (включая "Бесплатная заморозка стоимости.")
+    const beforeGifts = currentOffer.substring(0, warrantyMatch.index + warrantyMatch[0].length);
+    
+    // Часть после условий оплаты (ищем дату доставки, пропуская возможные подарки)
+    const afterWarranty = currentOffer.substring(warrantyMatch.index + warrantyMatch[0].length);
+    
+    // Ищем дату доставки, пропуская возможный блок подарков
+    let datePart = '';
+    const deliveryMatch = afterWarranty.match(/Ближайшая дата доставки[^\n]*/);
+    if (deliveryMatch) {
+        datePart = '\n' + deliveryMatch[0].trim();
+        if (!datePart.endsWith('.')) datePart += '.';
+    } else {
+        // Если дата не найдена, получаем из переменной
+        let deliveryDateText = "17 февраля";
+        if (currentDeliveryDate) {
+            const currentYear = new Date().getFullYear();
+            deliveryDateText = currentDeliveryDate + "." + currentYear;
+        }
+        datePart = '\nБлижайшая дата доставки — ' + deliveryDateText + '.';
+    }
+    
+    // Получаем текст подарков
+    let giftsText = '';
+    if (overrideSelectedGifts && Object.keys(overrideSelectedGifts).length > 0) {
+        giftsText = getGiftsTextFromObject(overrideSelectedGifts);
+    } else {
+        giftsText = getGiftsText();
+    }
+    
+    // Пересобираем КП: до условий + условия + отступ + подарки (если есть) + отступ + дата
+    let newOffer = beforeGifts;
+    if (giftsText && giftsText.trim() !== '') {
+        // Подарки вставляются с отступами: пустая строка перед и после блока подарков
+        newOffer += '\n\n' + giftsText.trimStart() + '\n';
+    }
+    newOffer += datePart;
+    
+    shortOfferTextarea.value = newOffer;
+}
+
+/**
+ * ПЕРЕСОБИРАЕТ длинное КП из частей с правильными подарками
+ * НОВЫЙ ПОДХОД: вместо удаления/вставки через regex пересобираем КП заново
+ */
+function rebuildLongOfferWithGifts(overrideSelectedGifts = null) {
+    const longOfferTextarea = document.getElementById("commercial-offer");
+    if (!longOfferTextarea || !longOfferTextarea.value || 
+        longOfferTextarea.value.includes("Здесь будет ваше")) {
+        return;
+    }
+    
+    let currentOffer = longOfferTextarea.value;
+    
+    // Удаление всех старых блоков подарков для предотвращения дублирования
+    // Применяем несколько итераций для полной очистки всех вариантов форматирования
+    let previousLength = currentOffer.length;
+    let iterations = 0;
+    const MAX_ITERATIONS = 10; // Защита от бесконечного цикла
+    while (iterations < MAX_ITERATIONS) {
+        const newOffer = currentOffer.replace(/\n🎁 Подарок[аи]?[к]?:[\s\S]*?(?=\n💳 Без предоплаты|\n🌱 Бесплатное хранение|\n⏳ Предложение|$)/gm, '')
+            .replace(/\n🎁[^\n]*\n/g, '')
+            .replace(/🎁 Подарок[аи]?[к]?:[\s\S]*?(?=\n💳|\n🌱|\n⏳|$)/gm, '')
+            .replace(/🎁[^\n]*/g, '');
+        
+        if (newOffer.length === previousLength) {
+            break; // Больше ничего не удаляется
+        }
+        currentOffer = newOffer;
+        previousLength = newOffer.length;
+        iterations++;
+    }
+    
+    // Также удаляем все строки, которые содержат названия подарков в неправильном месте
+    // (если они не в блоке подарков, а где-то еще)
+    const giftNames = ['Дополнительная форточка', 'Капельный полив механический', 'Автомат для форточки', 
+                       'Автоматическая форточка', '4 грунтозацепа', 'грунтозацепа'];
+    giftNames.forEach(name => {
+        // Удаляем строки с названиями подарков, которые идут перед блоком условий оплаты
+        // но не являются частью правильного блока подарков
+        const lines = currentOffer.split('\n');
+        const cleanedLines = [];
+        let foundGiftsBlock = false;
+        let foundPaymentBlock = false;
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            // Если нашли блок условий оплаты, помечаем
+            if (line.includes('💳 Без предоплаты')) {
+                foundPaymentBlock = true;
+            }
+            // Если нашли правильный блок подарков (с 🎁), помечаем
+            if (line.includes('🎁 Подарок') || line.includes('🎁 Подарки')) {
+                foundGiftsBlock = true;
+            }
+            // Если строка содержит название подарка, но мы еще не дошли до блока условий оплаты
+            // и это не правильный блок подарков - пропускаем её
+            if (!foundPaymentBlock && !foundGiftsBlock && giftNames.some(giftName => line.includes(giftName))) {
+                // Пропускаем эту строку (не добавляем в cleanedLines)
+                continue;
+            }
+            cleanedLines.push(line);
+        }
+        currentOffer = cleanedLines.join('\n');
+    });
+    
+    // Удаляем множественные пустые строки
+    currentOffer = currentOffer.replace(/\n{3,}/g, '\n\n');
+    
+    // Находим блок условий оплаты
+    const paymentMatch = currentOffer.match(/\n💳 Без предоплаты/);
+    if (!paymentMatch) {
+        return; // Если структура неожиданная, не трогаем
+    }
+    
+    // Часть до условий оплаты
+    const beforeGifts = currentOffer.substring(0, paymentMatch.index);
+    
+    // Часть после условий оплаты (включая условия)
+    const afterPayment = currentOffer.substring(paymentMatch.index);
+    
+    // Получаем текст подарков
+    let giftsText = '';
+    if (overrideSelectedGifts && Object.keys(overrideSelectedGifts).length > 0) {
+        giftsText = getGiftsTextFromObject(overrideSelectedGifts);
+    } else {
+        giftsText = getGiftsText();
+    }
+    
+    // Пересобираем КП: до условий + отступ + подарки (если есть) + отступ + условия и остальное
+    let newOffer = beforeGifts;
+    if (giftsText && giftsText.trim() !== '') {
+        // ИСПРАВЛЕНО: Подарки вставляются перед условиями оплаты с одним отступом (пустая строка перед блоком)
+        newOffer += '\n' + giftsText.trimStart() + '\n';
+    }
+    newOffer += afterPayment;
+    
+    longOfferTextarea.value = newOffer;
+}
+
+/**
+ * Обновляет коммерческие предложения (короткое и длинное КП) с текущими подарками
+ * НОВЫЙ ПОДХОД: пересборка КП из частей вместо regex манипуляций
+ * @param {Object} overrideSelectedGifts - Опционально: переопределить выбранные подарки
+ */
+function updateCommercialOffersWithGifts(overrideSelectedGifts = null) {
+    // Используем новый подход - пересборка КП из частей
+    rebuildShortOfferWithGifts(overrideSelectedGifts);
+    rebuildLongOfferWithGifts(overrideSelectedGifts);
+}
+
+/**
+ * Обработчик изменения выбора подарка
+ */
+function onGiftChange() {
+    // ВАЖНО: Сначала сохраняем выбранные подарки в localStorage (только непустые значения)
+    // Это нужно сделать ДО обновления блока подарков, чтобы getGiftsText() мог прочитать актуальные значения
+    const selectedGifts = {};
+    const giftSelects = document.querySelectorAll('.gift-select');
+    giftSelects.forEach(select => {
+        // Проверяем, что элемент видим (родительский .gift-item не скрыт)
+        const giftItem = select.closest('.gift-item');
+        if (giftItem) {
+            const computedStyle = window.getComputedStyle(giftItem);
+            if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden') {
+                return; // Пропускаем скрытые элементы
+            }
+        }
+        
+        // Сохраняем только если значение выбрано (не пустое)
+        if (select.value && select.value.trim() !== '') {
+            selectedGifts[select.id] = select.value;
+        } else {
+            // Если значение пустое, удаляем из selectedGifts (если было)
+            delete selectedGifts[select.id];
+        }
+    });
+    
+    // ИСПРАВЛЕНО: Автоматическое объединение форточки + автомат в автоматическую форточку
+    // Если выбраны форточка и автомат в разных слотах - объединяем их в автоматическую форточку
+    const hasWindow = Object.values(selectedGifts).includes('window');
+    const hasAutomation = Object.values(selectedGifts).includes('window-automation');
+    
+    if (hasWindow && hasAutomation) {
+        // Находим слот с форточкой
+        const windowSlot = Object.keys(selectedGifts).find(key => selectedGifts[key] === 'window');
+        if (windowSlot) {
+            // Заменяем форточку на автоматическую форточку
+            selectedGifts[windowSlot] = 'window-auto';
+            // Удаляем автомат из другого слота
+            const automationSlot = Object.keys(selectedGifts).find(key => selectedGifts[key] === 'window-automation');
+            if (automationSlot) {
+                delete selectedGifts[automationSlot];
+                // Очищаем значение в DOM
+                const automationSelect = document.getElementById(automationSlot);
+                if (automationSelect) {
+                    automationSelect.value = '';
+                }
+            }
+            // Обновляем значение в DOM
+            const windowSelect = document.getElementById(windowSlot);
+            if (windowSelect) {
+                windowSelect.value = 'window-auto';
+            }
+        }
+    }
+    
+    // Сохраняем в localStorage сразу
+    localStorage.setItem('selectedGifts', JSON.stringify(selectedGifts));
+    
+    // ВАЖНО: Сначала скрываем/показываем элементы напрямую через DOM для мгновенной реакции
+    const gift2Item = document.querySelector('.gift-item:has(#gift-2)') || 
+                     Array.from(document.querySelectorAll('.gift-item')).find(item => item.querySelector('#gift-2'));
+    const gift3Item = document.querySelector('.gift-item:has(#gift-3)') || 
+                     Array.from(document.querySelectorAll('.gift-item')).find(item => item.querySelector('#gift-3'));
+    
+    // ИСПРАВЛЕНО: Если выбрана "Автоматическая форточка" в подарке 1, скрываем подарок 2, НО НЕ удаляем его значение
+    // Это предотвращает сброс подарка при скрытии слота
+    if (selectedGifts['gift-1'] === 'window-auto') {
+        // НЕ удаляем gift-2 из selectedGifts - сохраняем его значение
+        // Скрываем элемент напрямую через DOM
+        if (gift2Item) {
+            gift2Item.style.display = 'none';
+        }
+    } else {
+        // Если "Автоматическая форточка" не выбрана в подарке 1, показываем подарок 2 (если он должен быть доступен)
+        // ИСПРАВЛЕНО: Используем уже рассчитанную цену из глобальной переменной
+        const availableGifts = lastCalculatedPrice >= 75000 ? 3 : (lastCalculatedPrice >= 55000 ? 2 : (lastCalculatedPrice >= 35000 ? 1 : 0));
+        // Показываем подарок 2 только если доступно 2+ подарка
+        if (availableGifts >= 2 && gift2Item) {
+            gift2Item.style.display = '';
+        }
+    }
+    
+    // ИСПРАВЛЕНО: Если выбрана "Автоматическая форточка" в подарке 2, скрываем подарок 3, НО НЕ удаляем его значение
+    if (selectedGifts['gift-2'] === 'window-auto') {
+        // НЕ удаляем gift-3 из selectedGifts - сохраняем его значение
+        // Скрываем элемент напрямую через DOM
+        if (gift3Item) {
+            gift3Item.style.display = 'none';
+        }
+    } else {
+        // Если "Автоматическая форточка" не выбрана в подарке 2, показываем подарок 3 (если он должен быть доступен)
+        // ИСПРАВЛЕНО: Используем уже рассчитанную цену из глобальной переменной
+        const availableGifts = lastCalculatedPrice >= 75000 ? 3 : (lastCalculatedPrice >= 55000 ? 2 : (lastCalculatedPrice >= 35000 ? 1 : 0));
+        // Показываем подарок 3 только если:
+        // 1. Доступно 3 подарка
+        // 2. Подарок 1 НЕ занял 2 слота (не выбрана window-auto в подарке 1)
+        // 3. Подарок 2 НЕ занял 2 слота (не выбрана window-auto в подарке 2)
+        if (availableGifts >= 3 && 
+            selectedGifts['gift-1'] !== 'window-auto' && 
+            selectedGifts['gift-2'] !== 'window-auto' && 
+            gift3Item) {
+            gift3Item.style.display = '';
+        }
+    }
+    
+    // Сохраняем обновленные подарки в localStorage
+    localStorage.setItem('selectedGifts', JSON.stringify(selectedGifts));
+    
+    // Если выбран автомат для форточки, но нет доп форточки - предупреждаем
+    const hasWindowAutomation = Object.values(selectedGifts).includes('window-automation');
+    const additionalWindowQty = parseInt(document.getElementById('additional-window-qty')?.value || '0', 10);
+    const hasWindowInGifts = Object.values(selectedGifts).includes('window') || 
+                            Object.values(selectedGifts).includes('window-auto');
+    
+    if (hasWindowAutomation && additionalWindowQty === 0 && !hasWindowInGifts) {
+        showWarning('Автомат для форточки можно установить только на дополнительную форточку. Выберите дополнительную форточку в подарках или купите её.');
+    }
+    
+    // Получаем текущую итоговую сумму для обновления блока подарков
+    // ИСПРАВЛЕНО: Используем уже рассчитанную цену из глобальной переменной вместо парсинга из КП
+    let totalPrice = lastCalculatedPrice;
+    
+    // Если цена не найдена, пытаемся получить из предварительного расчета
+    if (isNaN(totalPrice) || totalPrice === 0) {
+        // Вызываем предварительный расчет для получения суммы
+        if (typeof updateGiftsBlockPreview === 'function') {
+            updateGiftsBlockPreview();
+            return; // updateGiftsBlockPreview сам вызовет calculateGreenhouseCost
+        }
+    }
+    
+    // ИСПРАВЛЕНО: Правильная последовательность обновлений
+    // 1. Сначала обновляем блок подарков (пересоздаем DOM с правильными опциями)
+    if (totalPrice > 0) {
+        updateGiftsBlock(totalPrice, selectedGifts);
+    }
+    
+    // 2. Затем обновляем КП с подарками (один раз, в конце)
+    // Используем selectedGifts, которые уже сохранены в localStorage
+    updateCommercialOffersWithGifts(selectedGifts);
+}
+
+/**
+ * Обработчик изменения количества дополнительной форточки
+ * Обновляет блок подарков, если изменилась возможность выбрать автомат
+ */
+function onAdditionalWindowChange() {
+    // ИСПРАВЛЕНО: Используем уже рассчитанную цену из глобальной переменной
+    if (lastCalculatedPrice > 0) {
+        updateGiftsBlock(lastCalculatedPrice);
+    }
+}
+
+/**
+ * Получает текст подарков для КП из объекта selectedGifts
+ * @param {Object} selectedGifts - Объект с выбранными подарками { 'gift-1': 'window', 'gift-2': 'stakes-4', ... }
+ * @returns {string} Текст с информацией о подарках
+ */
+function getGiftsTextFromObject(selectedGifts) {
+    if (!selectedGifts || Object.keys(selectedGifts).length === 0) {
+        return '';
+    }
+    
+    // Используем Map для подсчета количества каждого подарка
+    const giftCounts = new Map();
+    const giftNames = {
+        'window': 'дополнительная форточка',
+        'drip-mech': 'капельный полив механический',
+        'window-automation': 'автомат для форточки',
+        'window-auto': 'автоматическая форточка (форточка + автомат)',
+        'stakes-4': '4 грунтозацепа'
+    };
+    
+    // Проходим по всем выбранным подаркам и считаем количество каждого
+    Object.keys(selectedGifts).forEach(giftId => {
+        const giftValue = selectedGifts[giftId];
+        
+        // Пропускаем пустые значения
+        if (!giftValue || giftValue.trim() === '' || !giftNames[giftValue]) {
+            return;
+        }
+        
+        // ИСПРАВЛЕНО: Пропускаем подарки, которые скрыты из-за автоматической форточки
+        // Если выбран window-auto в подарке 1, пропускаем gift-2 (слот занят)
+        if (selectedGifts['gift-1'] === 'window-auto' && giftId === 'gift-2') {
+            return;
+        }
+        // Если выбран window-auto в подарке 2, пропускаем gift-3 (слот занят)
+        if (selectedGifts['gift-2'] === 'window-auto' && giftId === 'gift-3') {
+            return;
+        }
+        
+        // Увеличиваем счетчик для этого подарка
+        const giftName = giftNames[giftValue];
+        giftCounts.set(giftName, (giftCounts.get(giftName) || 0) + 1);
+    });
+    
+    if (giftCounts.size === 0) {
+        return '';
+    }
+    
+    // ИСПРАВЛЕНО: Формируем список подарков в одну строку через запятую
+    const giftsList = [];
+    giftCounts.forEach((count, giftName) => {
+        if (count === 1) {
+            giftsList.push(giftName);
+        } else {
+            giftsList.push(`${giftName} (${count} шт)`);
+        }
+    });
+    
+    // ИСПРАВЛЕНО: Упрощенное склонение - всегда "Подарки:" кроме 1 подарка
+    const uniqueGiftsCount = giftCounts.size;
+    const giftsWord = uniqueGiftsCount === 1 ? 'Подарок' : 'Подарки';
+    
+    // Форматируем в одну строку через запятую
+    return `\n🎁 ${giftsWord}: ${giftsList.join(', ')}`;
+}
+
+/**
+ * Получает текст подарков для КП из DOM элементов
+ * @returns {string} Текст с информацией о подарках
+ */
+function getGiftsText() {
+    // Читаем выбранные подарки из видимых DOM элементов (более надежно, чем localStorage)
+    const giftSelects = document.querySelectorAll('.gift-select');
+    
+    if (giftSelects.length === 0) {
+        return '';
+    }
+    
+    // Используем Map для подсчета количества каждого подарка
+    const giftCounts = new Map();
+    const giftNames = {
+        'window': 'дополнительная форточка',
+        'drip-mech': 'капельный полив механический',
+        'window-automation': 'автомат для форточки',
+        'window-auto': 'автоматическая форточка (форточка + автомат)',
+        'stakes-4': '4 грунтозацепа'
+    };
+    
+    // Используем ID элемента для правильной нумерации (gift-1, gift-2, gift-3)
+    // Проверяем только видимые элементы (не скрытые через display: none) и с непустыми значениями
+    giftSelects.forEach(select => {
+        // Проверяем, что элемент видим (родительский .gift-item не скрыт)
+        const giftItem = select.closest('.gift-item');
+        if (!giftItem) {
+            return; // Пропускаем элементы без родителя
+        }
+        
+        // Проверяем видимость через computed style
+        const computedStyle = window.getComputedStyle(giftItem);
+        if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden') {
+            return; // Пропускаем скрытые элементы
+        }
+        
+        // Проверяем, что значение не пустое и есть в списке подарков
+        const giftValue = select.value ? select.value.trim() : '';
+        if (!giftValue || !giftNames[giftValue]) {
+            return; // Пропускаем пустые значения и неизвестные подарки
+        }
+        
+        // Увеличиваем счетчик для этого подарка
+        const giftName = giftNames[giftValue];
+        giftCounts.set(giftName, (giftCounts.get(giftName) || 0) + 1);
+    });
+    
+    if (giftCounts.size === 0) {
+        return '';
+    }
+    
+    // ИСПРАВЛЕНО: Формируем список подарков в одну строку через запятую
+    const giftsList = [];
+    giftCounts.forEach((count, giftName) => {
+        if (count === 1) {
+            giftsList.push(giftName);
+        } else {
+            giftsList.push(`${giftName} (${count} шт)`);
+        }
+    });
+    
+    // ИСПРАВЛЕНО: Упрощенное склонение - всегда "Подарки:" кроме 1 подарка
+    const uniqueGiftsCount = giftCounts.size;
+    const giftsWord = uniqueGiftsCount === 1 ? 'Подарок' : 'Подарки';
+    
+    // Форматируем в одну строку через запятую
+    return `\n🎁 ${giftsWord}: ${giftsList.join(', ')}`;
+}
+
+/**
+ * Предварительное обновление блока подарков на основе текущих параметров
+ * Вызывается при изменении параметров без полного расчета
+ */
+function updateGiftsBlockPreview() {
+    // ВАЖНО: При изменении параметров очищаем старые подарки, чтобы не оставались следы
+    localStorage.removeItem('selectedGifts');
+    
+    // Проверяем, что все основные параметры выбраны
+    const city = document.getElementById("city")?.value;
+    const form = document.getElementById("form")?.value;
+    const width = parseFloat(document.getElementById("width")?.value);
+    const length = parseFloat(document.getElementById("length")?.value);
+    const frame = document.getElementById("frame")?.value;
+    const polycarbonate = document.getElementById("polycarbonate")?.value;
+    const arcStep = parseFloat(document.getElementById("arcStep")?.value);
+    
+    // Если не все параметры выбраны, скрываем блок подарков
+    if (!city || !form || isNaN(width) || isNaN(length) || !frame || !polycarbonate || isNaN(arcStep)) {
+        const giftsBlock = document.getElementById('gifts-block');
+        if (giftsBlock) {
+            giftsBlock.style.display = 'none';
+        }
+        // Очищаем блок подарков полностью
+        const giftsSelection = document.getElementById('gifts-selection');
+        if (giftsSelection) {
+            giftsSelection.innerHTML = '';
+        }
+        return;
+    }
+    
+    // Пытаемся найти базовую цену в текущих данных
+    const selectedEntry = currentCityData.find(item => {
+        return (
+            getFormCategory(item.form_name) === form &&
+            parseFloat(item.width) === width &&
+            parseFloat(item.length) === length &&
+            normalizeString(item.frame_description.replace(/двойная\s*/gi, "")).includes(normalizeString(frame)) &&
+            normalizeString(item.polycarbonate_type) === normalizeString(polycarbonate)
+        );
+    });
+    
+    if (!selectedEntry) {
+        return;
+    }
+    
+    // Рассчитываем примерную сумму (базовая цена + минимальные доплаты)
+    let estimatedPrice = selectedEntry.price;
+    
+    // Надбавка за arcStep 0.65
+    if (arcStep === 0.65) {
+        const baseEntry = currentCityData.find(item => {
+            return (
+                getFormCategory(item.form_name) === form &&
+                parseFloat(item.width) === width &&
+                parseFloat(item.length) === length &&
+                normalizeString(item.frame_description).includes(normalizeString(frame)) &&
+                (normalizeString(item.polycarbonate_type) === normalizeString("стандарт4мм") ||
+                    normalizeString(item.polycarbonate_type) === normalizeString("стандарт 4мм"))
+            );
+        });
+        if (baseEntry) {
+            const basePriceStandard = baseEntry.price;
+            const additionalCost = 0.25 * basePriceStandard;
+            estimatedPrice += additionalCost;
+            estimatedPrice = Math.ceil(estimatedPrice / 10) * 10;
+        }
+    }
+    
+    // Обновляем блок подарков с примерной суммой
+    updateGiftsBlock(estimatedPrice);
+}
+
+/**
+ * Показывает модальное окно с информацией о логике подарков
+ */
+function showGiftsInfoModal() {
+    const modal = document.getElementById('gifts-info-modal');
+    const modalBody = document.getElementById('gifts-info-modal-body');
+    
+    if (!modal || !modalBody) {
+        showError('Модальное окно с информацией о подарках не найдено');
+        return;
+    }
+    
+    // Если модальное окно уже открыто, закрываем его (toggle)
+    if (!modal.classList.contains('hidden')) {
+        closeGiftsInfoModal();
+        return;
+    }
+    
+    modalBody.innerHTML = `
+        <h3>📊 Количество подарков по сумме заказа:</h3>
+        <ul>
+            <li><strong>От 35 000 рублей</strong> — 1 подарок (по умолчанию: дополнительная форточка)</li>
+            <li><strong>От 55 000 рублей</strong> — 2 подарка (по умолчанию: форточка + капельный полив)</li>
+            <li><strong>От 75 000 рублей</strong> — 3 подарка (по умолчанию: форточка + капельный полив + автомат для форточки)</li>
+        </ul>
+        
+        <h3>🔄 Правила замены подарков:</h3>
+        <ul>
+            <li><strong>Любой подарок можно заменить на 4 грунтозацепа</strong></li>
+            <li><strong>Капельный полив можно заменить на вторую форточку</strong> (при условии соблюдения суммы заказа)</li>
+            <li><strong>Максимум 3 подарка</strong> — даже если сумма очень большая, больше 3 подарков не будет</li>
+        </ul>
+        
+        <h3>⚙️ Особенности:</h3>
+        <ul>
+            <li><strong>"Автоматическая форточка" занимает 2 слота подарка</strong> — это форточка + автомат в одном подарке. Если вы выбрали её в подарке 1, то подарок 2 автоматически скрывается.</li>
+            <li><strong>Автомат для форточки можно выбрать только если есть дополнительная форточка</strong> — либо купленная в разделе "Дополнительные товары", либо выбранная в подарках.</li>
+            <li><strong>Если форточка выбрана или куплена, автомат становится доступен во ВСЕХ подарках</strong> — можно выбрать автомат в любом доступном подарке.</li>
+        </ul>
+        
+        <h3>💡 Примеры:</h3>
+        
+        <div class="example">
+            <strong>Пример 1: Заказ на 60 000 рублей (2 подарка)</strong>
+            <ul>
+                <li>Подарок 1: Дополнительная форточка</li>
+                <li>Подарок 2: Капельный полив механический</li>
+            </ul>
+            <p>Или можно заменить:</p>
+            <ul>
+                <li>Подарок 1: Автоматическая форточка (форточка + автомат) — <strong>подарок 2 скрывается</strong></li>
+                <li>Подарок 2: Недоступен (занят автоматической форточкой)</li>
+            </ul>
+        </div>
+        
+        <div class="example">
+            <strong>Пример 2: Заказ на 80 000 рублей (3 подарка)</strong>
+            <ul>
+                <li>Подарок 1: Дополнительная форточка</li>
+                <li>Подарок 2: Капельный полив механический</li>
+                <li>Подарок 3: Автомат для форточки (стал доступен, так как форточка выбрана в подарке 1)</li>
+            </ul>
+        </div>
+        
+        <div class="example">
+            <strong>Пример 3: Заказ на 80 000 рублей + куплена форточка</strong>
+            <ul>
+                <li>Куплена дополнительная форточка в разделе "Дополнительные товары"</li>
+                <li>Подарок 1: Автомат для форточки (стал доступен во всех подарках)</li>
+                <li>Подарок 2: Капельный полив механический</li>
+                <li>Подарок 3: Автомат для форточки (можно выбрать второй автомат, если нужно)</li>
+            </ul>
+        </div>
+        
+        <div class="example">
+            <strong>Пример 4: Все подарки заменены на грунтозацепа</strong>
+            <ul>
+                <li>Подарок 1: 4 грунтозацепа</li>
+                <li>Подарок 2: 4 грунтозацепа</li>
+                <li>Подарок 3: 4 грунтозацепа</li>
+            </ul>
+            <p>Итого: 12 грунтозацепов в подарок</p>
+        </div>
+        
+        <h3>❓ Частые вопросы:</h3>
+        <ul>
+            <li><strong>Почему подарок 2 исчез?</strong> — Вы выбрали "Автоматическую форточку" в подарке 1, она занимает 2 слота (форточка + автомат), поэтому подарок 2 скрывается.</li>
+            <li><strong>Можно ли выбрать автомат без форточки?</strong> — Нет, автомат можно установить только на дополнительную форточку. Сначала выберите или купите форточку.</li>
+            <li><strong>Сколько максимум подарков?</strong> — Максимум 3 подарка, независимо от суммы заказа.</li>
+        </ul>
+    `;
+    
+    modal.classList.remove('hidden');
+}
+
+/**
+ * Закрывает модальное окно с информацией о подарках
+ */
+function closeGiftsInfoModal() {
+    const modal = document.getElementById('gifts-info-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+
+/**
+ * Добавляет подарки в КП (вызывает полный пересчет стоимости)
+ */
+function addGiftsToOffer() {
+    // Вызываем полный пересчет стоимости, который обновит КП с подарками
+    if (typeof calculateGreenhouseCost === 'function') {
+        calculateGreenhouseCost();
+    } else {
+        showError('Ошибка: функция расчета стоимости не найдена');
+    }
+}
+
+/**
+ * Удаляет все выбранные подарки
+ */
+function removeGifts() {
+    // Очищаем выбранные подарки из localStorage
+    localStorage.removeItem('selectedGifts');
+    
+    // Очищаем значения в выпадающих списках
+    const giftSelects = document.querySelectorAll('.gift-select');
+    giftSelects.forEach(select => {
+        select.value = '';
+    });
+    
+    // Обновляем КП, удаляя подарки
+    updateCommercialOffersWithGifts({});
+    
+    // Обновляем блок подарков (если есть сумма для расчета)
+    const resultElement = document.getElementById('result');
+    if (resultElement && resultElement.textContent) {
+        const match = resultElement.textContent.match(/Итоговая стоимость[^\d]*(\d[\d\s]*)/);
+        if (match) {
+            const priceText = match[1].replace(/\s/g, '');
+            const totalPrice = parseFloat(priceText);
+            if (!isNaN(totalPrice) && totalPrice > 0) {
+                updateGiftsBlock(totalPrice, {});
+            }
+        }
+    }
+    
+    showSuccess('Подарки удалены');
+}
+
+// Делаем функции доступными глобально
+window.onAdditionalWindowChange = onAdditionalWindowChange;
+window.onGiftChange = onGiftChange;
+window.updateGiftsBlockPreview = updateGiftsBlockPreview;
+window.updateCommercialOffersWithGifts = updateCommercialOffersWithGifts;
+window.showGiftsInfoModal = showGiftsInfoModal;
+window.closeGiftsInfoModal = closeGiftsInfoModal;
+window.addGiftsToOffer = addGiftsToOffer;
+window.removeGifts = removeGifts;
 
 
 

@@ -11,7 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.28.0/dist/umd/supabase.min.js"></script>
   
   <!-- cache-bust: Safari иногда держит старые стили, поэтому версия должна меняться при правках -->
-  <link rel="stylesheet" href="css/styles.css?v=153">
+    <link rel="stylesheet" href="css/styles.css?v=186">
 </head>
   <body>
     <!-- Контейнер для уведомлений -->
@@ -241,20 +241,20 @@
         </div>
         <div class="parameters">
           <label for="frame">Каркас:</label>
-          <select id="frame" onchange="onFrameChange()">
+          <select id="frame" onchange="onFrameChange(); updateGiftsBlockPreview()">
             <option value="" disabled selected>Выберите каркас</option>
           </select>
         </div>
         <div class="parameters">
           <label for="polycarbonate">Поликарбонат:</label>
-          <select id="polycarbonate" onchange="calculateGreenhouseCost()">
+          <select id="polycarbonate" onchange="updateGiftsBlockPreview(); calculateGreenhouseCost()">
             <option value="" disabled selected>Выберите поликарбонат</option>
             <!-- Опции добавятся через JavaScript -->
           </select>
         </div>
         <div class="parameters">
           <label for="arcStep">Шаг между дугами:</label>
-          <select id="arcStep" onchange="calculateGreenhouseCost()">
+          <select id="arcStep" onchange="updateGiftsBlockPreview(); calculateGreenhouseCost()">
             <option value="1" selected>1 м</option>
             <option value="0.65">0.65 м</option>
           </select>
@@ -355,7 +355,7 @@
   <!-- 4) Дополнительная форточка -->
   <div class="product-item">
     <label class="product-label">
-      <select id="additional-window-qty" data-price="1490" onchange="calculateGreenhouseCost()">
+      <select id="additional-window-qty" data-price="1490" onchange="onAdditionalWindowChange(); calculateGreenhouseCost()">
         <option value="0">0</option>
         <option value="1">1</option>
         <option value="2">2</option>
@@ -400,6 +400,37 @@
     </label>
   </div>
   
+  <!-- Блок подарков -->
+  <div class="gifts-block" id="gifts-block" style="display: none;">
+    <div class="gifts-header">
+      <h3>🎁 Подарки</h3>
+      <button class="gifts-info-button" onclick="showGiftsInfoModal()">Как работают подарки?</button>
+    </div>
+    <div class="gifts-info" id="gifts-info"></div>
+    <div class="gifts-selection" id="gifts-selection"></div>
+    <!-- Кнопки управления подарками -->
+    <div class="gifts-actions">
+      <button class="gifts-add-button" onclick="addGiftsToOffer()">Добавить подарок</button>
+      <button class="gifts-remove-button" onclick="removeGifts()">Удалить подарок</button>
+    </div>
+  </div>
+  
+  <!-- Модальное окно с информацией о подарках -->
+  <div class="modal gifts-info-modal hidden" id="gifts-info-modal">
+    <div class="modal-content gifts-info-modal-content">
+      <div class="modal-header">
+        <h2>🎁 Как работают подарки?</h2>
+        <span class="close" onclick="closeGiftsInfoModal()">&times;</span>
+      </div>
+      <div class="gifts-info-modal-body" id="gifts-info-modal-body">
+        <!-- Содержимое будет добавлено через JavaScript -->
+      </div>
+      <div class="modal-footer">
+        <button class="modal-close-button" onclick="closeGiftsInfoModal()">Закрыть</button>
+      </div>
+    </div>
+  </div>
+  
   <!-- Кнопка для выбора грядок -->
   <div class="beds-button-container">
     <button class="beds-button" onclick="showBedsModal()">
@@ -437,7 +468,7 @@
     </div>
 
     <!-- cache-bust: версия скрипта должна быть синхронизирована с APP_VERSION в scripts.js -->
-    <script src="js/scripts.js?v=147"></script>
+    <script src="js/scripts.js?v=186"></script>
   </div>
 </body>
 </html>

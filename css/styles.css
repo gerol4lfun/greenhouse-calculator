@@ -250,41 +250,62 @@ label {
   border-right: none;
 }
 
-/* Контейнер для кнопок вверху справа */
+/* ========== КНОПКИ ВВЕРХУ СПРАВА ========== */
+/* Контейнер для кнопок - полностью переписан */
 .top-buttons-container {
   position: absolute;
   top: 10px;
   right: 10px;
   display: flex;
-  gap: 10px;
+  flex-direction: row;
   align-items: center;
+  gap: 10px;
   z-index: 1000;
 }
 
+/* Кнопка "Выйти" - полностью переписана */
 .logout {
-  background: #f8f9fa !important;
-  color: #5a6c7d !important;
-  border: 2px solid #e1e8ed !important;
-  border-radius: 8px !important;
-  font-size: 14px !important;
-  padding: 8px 16px !important;
-  cursor: pointer !important;
-  width: auto !important;
-  transition: all 0.3s ease !important;
-  font-weight: 500 !important;
-  margin: 0 !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
+  /* Базовые стили */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  
+  /* Размеры */
+  height: 36px;
+  padding: 0 16px;
+  min-width: auto;
+  width: auto;
+  
+  /* Внешний вид */
+  background: #f8f9fa;
+  color: #5a6c7d;
+  border: 2px solid #e1e8ed;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  /* Текст */
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  text-align: center;
+  
+  /* Интерактивность */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  /* Видимость */
+  visibility: visible;
+  opacity: 1;
+  margin: 0;
 }
 
 .logout:hover {
-  background-color: #e9ecef !important;
-  color: #2c3e50 !important;
-  border-color: #cbd5e0 !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  background-color: #e9ecef;
+  color: #2c3e50;
+  border-color: #cbd5e0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Параметры */
@@ -543,6 +564,322 @@ select option {
   white-space: nowrap;
   font-size: 16px;
   margin-left: auto;
+}
+
+/* --- Блок подарков --- */
+.gifts-block {
+  margin-top: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  background: linear-gradient(135deg, #fff5e6 0%, #ffe6cc 100%);
+  padding: 20px;
+  border-radius: 8px;
+  border: 2px solid #ffd700;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+}
+
+.gifts-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.gifts-block h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #2c3e50;
+  text-align: center;
+  font-weight: 600;
+}
+
+.gifts-info-button {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  color: #5a6c7d;
+  transition: all 0.3s ease;
+  text-decoration: underline;
+  text-decoration-color: rgba(90, 108, 125, 0.3);
+  text-underline-offset: 3px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.gifts-info-button:hover {
+  color: #2c3e50;
+  opacity: 1;
+  text-decoration-color: #2c3e50;
+}
+
+.gifts-info-modal {
+  z-index: 10000;
+}
+
+.gifts-info-modal-content {
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.gifts-info-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px 0 20px;
+  border-bottom: 1px solid #e1e8ed;
+  margin-bottom: 20px;
+}
+
+.gifts-info-modal .modal-header h2 {
+  color: #e6b800;
+  margin: 0;
+  font-size: 24px;
+}
+
+.gifts-info-modal .modal-header .close {
+  color: #5a6c7d;
+  font-size: 32px;
+  font-weight: 300;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(90, 108, 125, 0.1);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.gifts-info-modal .modal-header .close:hover {
+  background: rgba(90, 108, 125, 0.2);
+  color: #2c3e50;
+  transform: rotate(90deg);
+}
+
+.gifts-info-modal .modal-footer {
+  padding: 15px 20px 20px 20px;
+  border-top: 1px solid #e1e8ed;
+  margin-top: 20px;
+  text-align: center;
+}
+
+.modal-close-button {
+  background: #27ae60;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.modal-close-button:hover {
+  background: #229954;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+}
+
+.gifts-info-modal-body {
+  padding: 0 20px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.gifts-info-modal-body h3 {
+  color: #2c3e50;
+  margin-top: 25px;
+  margin-bottom: 15px;
+  font-size: 18px;
+  border-bottom: 2px solid #ffd700;
+  padding-bottom: 8px;
+}
+
+.gifts-info-modal-body .example {
+  background: #fffbe6;
+  border-left: 4px solid #ffd700;
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 4px;
+}
+
+.gifts-info-modal-body .example strong {
+  color: #e6b800;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.gifts-info-modal-body ul {
+  margin: 10px 0;
+  padding-left: 25px;
+}
+
+.gifts-info-modal-body li {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.gifts-info {
+  margin-bottom: 15px;
+  padding: 12px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #ffd700;
+  font-size: 14px;
+  color: #34495e;
+  text-align: center;
+}
+
+.gifts-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Кнопки управления подарками */
+.gifts-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.gifts-add-button,
+.gifts-remove-button {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.gifts-add-button {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2);
+}
+
+.gifts-add-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+  background: linear-gradient(135deg, #2980b9 0%, #21618c 100%);
+}
+
+.gifts-add-button:active {
+  transform: translateY(0);
+}
+
+.gifts-remove-button {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(231, 76, 60, 0.2);
+}
+
+.gifts-remove-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+  background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+}
+
+.gifts-remove-button:active {
+  transform: translateY(0);
+}
+
+.gift-item {
+  padding: 12px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e1e8ed;
+  transition: all 0.2s ease;
+}
+
+.gift-item:hover {
+  border-color: #ffd700;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.2);
+}
+
+.gift-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.gift-label select {
+  margin-right: 10px;
+  width: 200px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  border: 2px solid #e1e8ed;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #34495e;
+  background-color: #fff;
+  cursor: pointer;
+  padding: 0 40px 0 12px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-position: right 14px center;
+  background-repeat: no-repeat;
+  background-size: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M3.5 5L7 8.5L10.5 5' stroke='%235a6c7d' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.gift-label select:hover {
+  border-color: #ffd700;
+  background-color: #fff;
+}
+
+.gift-label select:focus {
+  border-color: #ffd700;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1);
+  outline: none;
+}
+
+.gift-name {
+  flex-grow: 1;
+  text-align: left;
+  margin-left: 0;
+  font-size: 16px;
+  color: #34495e;
+  font-weight: 500;
+}
+
+.gift-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  background: #ffd700;
+  color: #2c3e50;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
   text-align: right;
 }
 
@@ -783,34 +1120,48 @@ select option {
   text-align-last: center;
 }
 
-/* --- Админ-панель --- */
+/* Кнопка "Админ-панель" - полностью переписана */
 .admin-button {
-  background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important;
-  background-color: #27ae60 !important;
-  color: #fff !important;
-  border: none !important;
-  border-radius: 8px !important;
-  font-size: 14px !important;
-  padding: 8px 16px !important;
-  cursor: pointer !important;
-  width: auto !important;
-  min-width: auto !important;
-  max-width: none !important;
-  display: block !important;
-  margin: 0 !important;
-  box-sizing: border-box !important;
-  text-align: center !important;
-  font-weight: 500 !important;
-  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3) !important;
-  transition: all 0.3s ease !important;
-  visibility: visible !important;
-  opacity: 1 !important;
+  /* Базовые стили */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  
+  /* Размеры - точно такие же как у logout */
+  height: 36px;
+  padding: 0 16px;
+  min-width: auto;
+  width: auto;
+  
+  /* Внешний вид */
+  background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+  background-color: #27ae60;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+  
+  /* Текст */
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  text-align: center;
+  
+  /* Интерактивность */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  /* Видимость */
+  visibility: visible;
+  opacity: 1;
+  margin: 0;
 }
 
 .admin-button:hover {
-  background: linear-gradient(135deg, #229954 0%, #1e8449 100%) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 16px rgba(39, 174, 96, 0.4) !important;
+  background: linear-gradient(135deg, #229954 0%, #1e8449 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(39, 174, 96, 0.4);
 }
 
 .admin-panel {
