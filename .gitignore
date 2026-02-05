@@ -1,8 +1,15 @@
 .DS_Store
 node_modules/
 .env
+.env.local
+.env.*.local
 *.log
 telegram-bot/.env
+# Токены и секреты
+*_token.txt
+*_token.md
+TOKEN_*.md
+*.token
 
 # Временные файлы разработки
 fix_*.py
@@ -22,3 +29,6 @@ rewrite_function.py
 
 # CSV файлы (исходные данные)
 *.csv
+
+# Большие файлы (если нужно исключить)
+# *.json (раскомментируйте, если kb/greenhouse_kb.v1.json слишком большой)
