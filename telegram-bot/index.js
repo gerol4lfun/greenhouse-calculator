@@ -1,5 +1,8 @@
 /**
  * Telegram бот для обновления дат доставки в Supabase
+ * 
+ * 📍 Проект на Railway: Telegram Bot - Delivery Dates
+ * 🔗 Репозиторий: delivery-bot-telegram
  */
 
 require('dotenv').config();
