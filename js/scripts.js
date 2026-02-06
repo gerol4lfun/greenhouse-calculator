@@ -1,7 +1,7 @@
 
 // Константа для контроля отладки
 const DEBUG = false; // Отключено для продакшена
-const APP_VERSION = "v186"; // v186: Подарки с маленькой буквы для гармоничного вида, все исправления v185 работают // v185: Подарки в одну строку через запятую, исправлены отступы, исправлена логика скрытия подарков
+const APP_VERSION = "v190"; // v190: Исправлена очистка restrictions в боте - теперь правильно обновляются в базе // v189: Улучшена обработка пустых restrictions (правильная очистка старых ограничений)
 
 // ==================== СИСТЕМА УВЕДОМЛЕНИЙ (TOAST) ====================
 
@@ -1929,8 +1929,8 @@ if (!nearestCity) {
 
             deliveryCost = roundedCost; // сохраняем стоимость доставки в глобальной переменной
 
-            // Загружаем дату доставки для найденного города
-            const deliveryDate = await loadDeliveryDate(nearestCity.name);
+            // Загружаем дату доставки для найденного города (принудительно обновляем)
+            const deliveryDate = await loadDeliveryDate(nearestCity.name, true);
             
             // Формируем текст результата с датой доставки
             let resultText = `Стоимость доставки: ${formatPrice(roundedCost)} рублей (${nearestCity.name})`;
@@ -3641,8 +3641,9 @@ async function showDeliveryDatesModal() {
             contentDiv.style.display = 'none';
         }
         
-        // Загружаем все даты доставки
-        await loadAllDeliveryDates();
+        // Загружаем все даты доставки (принудительно обновляем при каждом открытии)
+        // Всегда загружаем свежие данные из базы
+        await loadAllDeliveryDates(true);
         
         // Скрываем загрузку и показываем контент
         if (loadingDiv) {
@@ -3659,9 +3660,46 @@ async function showDeliveryDatesModal() {
     }
 }
 
+// Функция обновления дат доставки
+async function refreshDeliveryDates() {
+    const loadingDiv = document.getElementById('delivery-dates-loading');
+    const contentDiv = document.getElementById('delivery-dates-content');
+    const container = document.getElementById('delivery-dates-table-container');
+    
+    if (loadingDiv) {
+        loadingDiv.style.display = 'block';
+        loadingDiv.innerHTML = '🔄 Обновление данных...';
+    }
+    
+    if (contentDiv) {
+        contentDiv.style.display = 'none';
+    }
+    
+    try {
+        // Принудительно обновляем данные
+        await loadAllDeliveryDates(true);
+        
+        if (loadingDiv) {
+            loadingDiv.style.display = 'none';
+        }
+        if (contentDiv) {
+            contentDiv.style.display = 'block';
+        }
+        
+        showSuccess('Данные успешно обновлены', 'Обновление завершено');
+    } catch (err) {
+        console.error("❌ Ошибка при обновлении данных:", err);
+        if (loadingDiv) {
+            loadingDiv.innerHTML = '<div class="no-data" style="color: red; padding: 20px;">Ошибка обновления данных.<br><br>' + err.message + '</div>';
+        }
+        showError('Не удалось обновить данные', 'Ошибка обновления');
+    }
+}
+
 // Убеждаемся, что функция доступна глобально
 window.showDeliveryDatesModal = showDeliveryDatesModal;
 window.closeDeliveryDatesModal = closeDeliveryDatesModal;
+window.refreshDeliveryDates = refreshDeliveryDates;
 
 // Функция закрытия модального окна
 function closeDeliveryDatesModal() {
@@ -3673,7 +3711,7 @@ function closeDeliveryDatesModal() {
 }
 
 // Функция загрузки всех дат доставки из Supabase
-async function loadAllDeliveryDates() {
+async function loadAllDeliveryDates(forceRefresh = false) {
     const container = document.getElementById('delivery-dates-table-container');
     if (!container) {
         console.error("Контейнер для таблицы не найден!");
@@ -3681,12 +3719,21 @@ async function loadAllDeliveryDates() {
     }
 
     try {
+        // Принудительно обновляем данные
         // Загружаем поля включая restrictions для отображения ограничений
         // Если колонка restrictions не существует, загружаем без неё
-        let { data, error } = await supabaseClient
+        // Supabase всегда возвращает актуальные данные из базы при каждом запросе
+        if (DEBUG) console.log('🔄 Загрузка дат доставки из Supabase (forceRefresh:', forceRefresh, ')');
+        
+        let query = supabaseClient
             .from('delivery_dates')
             .select('city_name, delivery_date, restrictions')
             .order('city_name');
+        
+        // Выполняем запрос - Supabase всегда возвращает актуальные данные из базы
+        let { data, error } = await query;
+        
+        if (DEBUG) console.log('📊 Получено записей:', data ? data.length : 0, 'Ошибка:', error);
         
         // Если ошибка из-за отсутствия колонки restrictions, загружаем без неё
         if (error && error.code === '42703' && error.message.includes('restrictions')) {
@@ -3730,12 +3777,21 @@ async function loadAllDeliveryDates() {
                 const standardName = standardCityNames[normalizedKey] || 
                                     (item.city_name.charAt(0).toUpperCase() + item.city_name.slice(1).toLowerCase());
                 
+                // Обрабатываем restrictions: если пустая строка или только пробелы, устанавливаем null
+                let restrictionsValue = null;
+                if (item.restrictions !== null && item.restrictions !== undefined) {
+                    const trimmed = String(item.restrictions).trim();
+                    if (trimmed !== '') {
+                        restrictionsValue = trimmed;
+                    }
+                }
+                
                 // Если уже есть запись с нормализованным названием, приоритет стандартному названию
                 if (!normalizedMap.has(normalizedKey)) {
                     normalizedMap.set(normalizedKey, {
                         ...item,
                         city_name: standardName,
-                        restrictions: item.restrictions || null
+                        restrictions: restrictionsValue
                     });
                 } else {
                     // Приоритет записи, которая уже имеет стандартное название
@@ -3747,7 +3803,7 @@ async function loadAllDeliveryDates() {
                         normalizedMap.set(normalizedKey, {
                             ...item,
                             city_name: standardName,
-                            restrictions: item.restrictions || null
+                            restrictions: restrictionsValue
                         });
                     }
                 }
@@ -3774,17 +3830,21 @@ async function loadAllDeliveryDates() {
         }
 
         if (error) {
-            console.error("Ошибка при загрузке дат доставки:", error);
+            console.error("❌ Ошибка при загрузке дат доставки:", error);
+            console.error("Детали ошибки:", JSON.stringify(error, null, 2));
             container.innerHTML = 
-                '<div class="no-data" style="color: red; padding: 20px;">Ошибка загрузки данных из базы. Проверьте подключение к Supabase.<br><br>Детали: ' + (error.message || 'Неизвестная ошибка') + '</div>';
+                '<div class="no-data" style="color: red; padding: 20px;">Ошибка загрузки данных из базы. Проверьте подключение к Supabase.<br><br>Детали: ' + (error.message || 'Неизвестная ошибка') + '<br>Код ошибки: ' + (error.code || 'N/A') + '</div>';
             return;
         }
 
         if (!dataWithRestrictions || dataWithRestrictions.length === 0) {
+            console.warn("⚠️ Данные о датах доставки отсутствуют или пусты. Загружено записей:", data ? data.length : 0);
             container.innerHTML = 
                 '<div class="no-data">Данные о датах доставки отсутствуют в базе данных.</div>';
             return;
         }
+        
+        console.log("✅ Успешно загружено дат доставки:", dataWithRestrictions.length);
 
         // Формируем таблицу
         renderDeliveryDatesTable(dataWithRestrictions);

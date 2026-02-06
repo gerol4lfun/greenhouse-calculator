@@ -11,7 +11,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.28.0/dist/umd/supabase.min.js"></script>
   
   <!-- cache-bust: Safari иногда держит старые стили, поэтому версия должна меняться при правках -->
-    <link rel="stylesheet" href="css/styles.css?v=186.4">
+    <link rel="stylesheet" href="css/styles.css?v=190">
 </head>
   <body>
     <!-- Контейнер для уведомлений -->
@@ -39,7 +39,9 @@
     <div class="delivery-dates-modal-content">
       <div class="delivery-dates-modal-header">
         <h2>📅 Актуальные даты доставки по городам</h2>
-        <button class="close-modal-button" onclick="closeDeliveryDatesModal()">×</button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <button class="close-modal-button" onclick="closeDeliveryDatesModal()">×</button>
+        </div>
       </div>
       <div class="delivery-dates-modal-body">
         <div id="delivery-dates-loading" style="text-align: center; padding: 20px;">
@@ -468,7 +470,7 @@
     </div>
 
     <!-- cache-bust: версия скрипта должна быть синхронизирована с APP_VERSION в scripts.js -->
-    <script src="js/scripts.js?v=186"></script>
+    <script src="js/scripts.js?v=190"></script>
   </div>
 </body>
 </html>
