@@ -1931,7 +1931,17 @@ if (!nearestCity) {
             let resultText = `Стоимость доставки: ${formatPrice(roundedCost)} рублей (${nearestCity.name})`;
             if (deliveryDate) {
                 const currentYear = new Date().getFullYear();
-                resultText += `\n📅 Доставка: с ${deliveryDate}.${currentYear}`;
+                let deliveryDateText = `с ${deliveryDate}.${currentYear}`;
+                
+                // Добавляем ограничения, если они есть
+                if (currentDeliveryRestrictions && currentDeliveryRestrictions.trim()) {
+                    const restrictions = currentDeliveryRestrictions.split(',').map(r => r.trim()).filter(r => r);
+                    if (restrictions.length > 0) {
+                        deliveryDateText += `, кроме ${restrictions.join(', ')}`;
+                    }
+                }
+                
+                resultText += `\n📅 Доставка: ${deliveryDateText}`;
             }
             document.getElementById('result').innerText = resultText;
         } catch (routeError) {

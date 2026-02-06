@@ -4258,7 +4258,10 @@ input[type="radio"] {
   #result {
     margin-top: 15px;
     padding: 12px;
-    font-size: 14px;
+    font-size: 16px;
+    line-height: 1.6;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 }
 
