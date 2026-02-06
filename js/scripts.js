@@ -1579,7 +1579,12 @@ async function performCalculation(city, form, width, length, frame, polycarbonat
     }
 
     // Расчёт стоимости сборки (если выбрана)
-    if (assemblyChecked) {
+    // Сборка недоступна для теплиц без поликарбоната
+    const polycarbonateValue = document.getElementById("polycarbonate").value.trim();
+    const polyNormalized = polycarbonateValue.replace(/\s+/g, "").toLowerCase();
+    const isWithoutPolycarbonate = polyNormalized === "безполикарбоната";
+    
+    if (assemblyChecked && !isWithoutPolycarbonate) {
         const assemblyCategory = getAssemblyCategory(form, width); // Получаем категорию сборки
         if (assemblyCategory) {
             const assemblyCostCalculated = calculateAssemblyCost(form, assemblyCategory, length);
@@ -2019,6 +2024,14 @@ async function generateCommercialOffer(basePrice, assemblyCost, foundationCost, 
     const lengthValue = document.getElementById("length").value.trim();
     const arcStepValue = document.getElementById("arcStep").value.trim();
     const polycarbonateValue = document.getElementById("polycarbonate").value.trim();
+    
+    // Нормализуем значение поликарбоната для проверок
+    const polyNormalized = polycarbonateValue.replace(/\s+/g, "").toLowerCase();
+    
+    // Добавляем "без поликарбоната" если выбран вариант без поликарбоната
+    if (polyNormalized === "безполикарбоната") {
+        cleanName += ` без поликарбоната`;
+    }
 
     // Формирование строки для каркаса с добавлением суффикса ", краб система"
     let frameLine = `Каркас: ${frameValue}`;
@@ -2028,7 +2041,6 @@ async function generateCommercialOffer(basePrice, assemblyCost, foundationCost, 
 
     // Формирование строки для поликарбоната с добавлением веса (если выбран вариант, отличный от "Без поликарбоната")
     let polycarbonateLine = `Поликарбонат с УФ защитой: ${polycarbonateValue}`;
-    const polyNormalized = polycarbonateValue.replace(/\s+/g, "").toLowerCase();
     if (polyNormalized !== "безполикарбоната") {
         if (polyNormalized === "стандарт4мм") {
             polycarbonateLine += `, 0.47 кг/м2`;
@@ -2864,8 +2876,18 @@ async function generateShortOffer(finalTotalPrice1, selectedEntry) {
         return city;
     }
     
+    // Получаем значение поликарбоната
+    const polycarbonateValue = document.getElementById("polycarbonate").value.trim();
+    const polyNormalized = polycarbonateValue.replace(/\s+/g, "").toLowerCase();
+    const isWithoutPolycarbonate = polyNormalized === "безполикарбоната";
+    
     // Формируем заголовок
     let title = `${form} теплица ${width}×${length}`;
+    
+    // Добавляем "без поликарбоната" если выбран вариант без поликарбоната
+    if (isWithoutPolycarbonate) {
+        title += ` без поликарбоната`;
+    }
     
     // Добавляем информацию о доставке, если адрес указан
     if (deliveryAddress) {
@@ -2883,8 +2905,9 @@ async function generateShortOffer(finalTotalPrice1, selectedEntry) {
     
     // Добавляем информацию о сборке и комплектации
     // Логика: если сборка выбрана - пишем "со сборкой на...", если нет - "с ... в комплекте"
+    // Сборка недоступна для теплиц без поликарбоната
     
-    if (assemblyChecked) {
+    if (assemblyChecked && !isWithoutPolycarbonate) {
         // Со сборкой - можно писать "на брусе", так как сборка подразумевает установку
         if (bracingChecked && groundHooksChecked) {
             title += " со сборкой на брус с грунтозацепами";
@@ -7057,6 +7080,116 @@ window.showGiftsInfoModal = showGiftsInfoModal;
 window.closeGiftsInfoModal = closeGiftsInfoModal;
 window.addGiftsToOffer = addGiftsToOffer;
 window.removeGifts = removeGifts;
+
+// Обработчик изменения поликарбоната - отключает сборку для теплиц без поликарбоната
+function handlePolycarbonateChange() {
+    const polycarbonateSelect = document.getElementById("polycarbonate");
+    const assemblyCheckbox = document.getElementById('assembly');
+    
+    if (!polycarbonateSelect || !assemblyCheckbox) {
+        return;
+    }
+    
+    const polycarbonateValue = polycarbonateSelect.value.trim();
+    const polyNormalized = polycarbonateValue.replace(/\s+/g, "").toLowerCase();
+    const isWithoutPolycarbonate = polyNormalized === "безполикарбоната";
+    
+    if (isWithoutPolycarbonate) {
+        // Проверяем, была ли сборка выбрана до этого
+        const wasAssemblyChecked = assemblyCheckbox.checked;
+        
+        // Отключаем чекбокс сборки и снимаем выбор
+        assemblyCheckbox.disabled = true;
+        assemblyCheckbox.checked = false;
+        
+        // Добавляем визуальное указание, что сборка недоступна
+        const assemblyLabel = assemblyCheckbox.closest('label') || assemblyCheckbox.parentElement;
+        if (assemblyLabel) {
+            assemblyLabel.style.opacity = '0.5';
+            assemblyLabel.style.cursor = 'not-allowed';
+        }
+        
+        // Показываем уведомление, если сборка была выбрана
+        if (wasAssemblyChecked) {
+            showWarning('Каркасы теплиц не собираем отдельно, доступна только доставка.', 'Сборка недоступна');
+        }
+    } else {
+        // Включаем чекбокс сборки обратно
+        assemblyCheckbox.disabled = false;
+        const assemblyLabel = assemblyCheckbox.closest('label') || assemblyCheckbox.parentElement;
+        if (assemblyLabel) {
+            assemblyLabel.style.opacity = '1';
+            assemblyLabel.style.cursor = 'pointer';
+        }
+    }
+}
+
+// Обработчик клика на label сборки - показывает уведомление если сборка недоступна
+function handleAssemblyLabelClick(event) {
+    const assemblyCheckbox = document.getElementById('assembly');
+    const polycarbonateSelect = document.getElementById("polycarbonate");
+    
+    if (!assemblyCheckbox || !polycarbonateSelect) {
+        return;
+    }
+    
+    // Проверяем, выбрано ли "Без поликарбоната"
+    const polycarbonateValue = polycarbonateSelect.value.trim();
+    const polyNormalized = polycarbonateValue.replace(/\s+/g, "").toLowerCase();
+    const isWithoutPolycarbonate = polyNormalized === "безполикарбоната";
+    
+    // Если сборка недоступна (disabled) - показываем уведомление и предотвращаем клик
+    if (isWithoutPolycarbonate && assemblyCheckbox.disabled) {
+        event.preventDefault();
+        event.stopPropagation();
+        showWarning('Каркасы теплиц не собираем отдельно, доступна только доставка.', 'Сборка недоступна');
+        return false;
+    }
+}
+
+// Обработчик попытки выбрать сборку для теплицы без поликарбоната
+function handleAssemblyChange() {
+    const assemblyCheckbox = document.getElementById('assembly');
+    const polycarbonateSelect = document.getElementById("polycarbonate");
+    
+    if (!assemblyCheckbox || !polycarbonateSelect) {
+        return;
+    }
+    
+    // Проверяем, выбрано ли "Без поликарбоната"
+    const polycarbonateValue = polycarbonateSelect.value.trim();
+    const polyNormalized = polycarbonateValue.replace(/\s+/g, "").toLowerCase();
+    const isWithoutPolycarbonate = polyNormalized === "безполикарбоната";
+    
+    // Если выбрано "Без поликарбоната" и пытаются выбрать сборку
+    if (isWithoutPolycarbonate && assemblyCheckbox.checked) {
+        // Отменяем выбор и показываем уведомление
+        assemblyCheckbox.checked = false;
+        showWarning('Каркасы теплиц не собираем отдельно, доступна только доставка.', 'Сборка недоступна');
+        return;
+    }
+    
+    // Если все нормально - вызываем расчет стоимости
+    calculateGreenhouseCost();
+}
+
+window.handlePolycarbonateChange = handlePolycarbonateChange;
+window.handleAssemblyChange = handleAssemblyChange;
+window.handleAssemblyLabelClick = handleAssemblyLabelClick;
+
+// Вызываем проверку при загрузке страницы, если поликарбонат уже выбран
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById("polycarbonate") && document.getElementById("polycarbonate").value) {
+            handlePolycarbonateChange();
+        }
+    });
+} else {
+    // Если страница уже загружена
+    if (document.getElementById("polycarbonate") && document.getElementById("polycarbonate").value) {
+        handlePolycarbonateChange();
+    }
+}
 
 
 

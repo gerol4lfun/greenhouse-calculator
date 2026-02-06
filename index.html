@@ -247,7 +247,7 @@
         </div>
         <div class="parameters">
           <label for="polycarbonate">Поликарбонат:</label>
-          <select id="polycarbonate" onchange="updateGiftsBlockPreview(); calculateGreenhouseCost()">
+          <select id="polycarbonate" onchange="handlePolycarbonateChange(); updateGiftsBlockPreview(); calculateGreenhouseCost()">
             <option value="" disabled selected>Выберите поликарбонат</option>
             <!-- Опции добавятся через JavaScript -->
           </select>
@@ -267,8 +267,8 @@
               <input type="checkbox" id="bracing" onchange="calculateGreenhouseCost()">
               <span>Брус</span>
             </label>
-            <label>
-              <input type="checkbox" id="assembly" onchange="calculateGreenhouseCost()">
+            <label onclick="handleAssemblyLabelClick(event)">
+              <input type="checkbox" id="assembly" onchange="handleAssemblyChange()">
               <span>Сборка</span>
             </label>
             <label>
