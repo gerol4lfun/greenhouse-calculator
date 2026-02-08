@@ -4718,4 +4718,104 @@ input[type="radio"] {
     margin-left: 0 !important;
     margin-top: 5px !important;
   }
+
+  /* Галерея теплиц - мобильная версия */
+  .greenhouses-gallery-modal .modal-content {
+    max-width: 100% !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+  }
+
+  .greenhouses-gallery-modal .modal-content > div:first-child {
+    padding: 15px !important;
+  }
+
+  .greenhouses-gallery-modal .modal-title {
+    font-size: 18px !important;
+  }
+
+  .greenhouses-gallery-modal [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Инструкции по сборке - мобильная версия */
+  .instructions-modal .instructions-modal-content {
+    max-width: 100% !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+
+  .instructions-modal .instructions-modal-content > div:first-child {
+    padding: 15px !important;
+  }
+
+  .instructions-modal .modal-title {
+    font-size: 18px !important;
+  }
+
+  .instructions-modal [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  .instructions-modal input[type="text"] {
+    font-size: 14px !important;
+    padding: 10px !important;
+  }
+
+  /* На мобильных - заголовки типов компактнее */
+  .instructions-modal [style*="width: 80px"][style*="height: 80px"] {
+    width: 60px !important;
+    height: 60px !important;
+    min-width: 60px !important;
+  }
+
+  .instructions-modal h3 {
+    font-size: 16px !important;
+  }
+
+  /* На мобильных - кнопки на всю ширину */
+  .instructions-modal [style*="display: flex"][style*="justify-content: space-between"] {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .instructions-modal [style*="display: flex"][style*="gap: 5px"][style*="flex-shrink: 0"] {
+    width: 100% !important;
+    justify-content: stretch !important;
+  }
+
+  .instructions-modal [style*="display: flex"][style*="gap: 5px"][style*="flex-shrink: 0"] button {
+    flex: 1 !important;
+  }
+}
+
+/* Стили для галереи теплиц */
+.greenhouses-gallery-modal [style*="grid-template-columns"] img {
+  object-fit: contain !important;
+  background: #f5f5f5;
+}
+
+/* Стили для модального окна инструкций */
+.instructions-modal-content {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f7fafc;
+}
+
+.instructions-modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.instructions-modal-content::-webkit-scrollbar-track {
+  background: #f7fafc;
+}
+
+.instructions-modal-content::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+}
+
+.instructions-modal-content::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
 }

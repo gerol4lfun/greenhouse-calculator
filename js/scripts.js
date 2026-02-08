@@ -1,7 +1,7 @@
 
 // Константа для контроля отладки
 const DEBUG = false; // Отключено для продакшена
-const APP_VERSION = "v203"; // v203: Добавлен favicon.ico для устранения ошибки 404, настроено кеширование статических ресурсов (изображения, видео, CSS, JS) через meta-теги и .htaccess, добавлено предупреждение в раздел "Автомат для форточки" о том, что он устанавливается только на дополнительную форточку, сделаны кнопки "скачать" менее заметными (только иконка, меньший размер, приглушенный цвет), добавлена полная надпись "Скачать" в полноэкранном режиме просмотра фото, добавлены мобильные стили для product-info-modal и polycarbonate-info-modal, улучшена адаптивность всех элементов // v202: Сделана вся область названия товара кликабельной (не только иконка), кнопка информации для поликарбоната переделана в стиле product-info-link (прозрачный фон, синий цвет, интегрирована в label), улучшена интерактивность с hover-эффектами // v201: Улучшен дизайн кнопок информации о товарах - перемещены в название товара как тонкая иконка справа, новый стиль product-info-link с прозрачным фоном и синим цветом, более профессиональная интеграция // v200: Исправлена ошибка toggleFAQAnswer is not defined - добавлена функция toggleFAQAnswer, исправлены символы в toggleFAQ (используются + и − вместо ▼ и ▲), добавлен вопрос "Количество листов поликарбоната для теплиц" в FAQ с полными данными по всем 8 типам теплиц // v199: Повернуты последние 2 фото термопривода (photo_6.jpg и photo_7.jpg) на 90 градусов вправо, обновлен скрипт копирования для автоматического исправления ориентации всех изображений при копировании // v198: Создан скрипт fix_image_orientation.sh для автоматического исправления ориентации всех изображений на основе EXIF данных, применена автоматическая коррекция ориентации для всех фото // v197: Исправлены пути к фото в скрипте копирования (паропропускная лента, оцинкованная лента, боковые форточки), все фото и видео проверены и скопированы // v196: Исправлен путь к фото термопривода в скрипте копирования, убрано несуществующее photo_8.jpg из products-data.js, добавлена кнопка скачивания в полноэкранном режиме просмотра фото (openImageModalWithGallery) // v195: Заполнены описания для всех категорий товаров в products-data.js на основе информации из FAQ и логики назначения товаров // v194: Добавлены кнопки информации о товарах в разделе "Дополнительные товары", создана функция showProductInfo() для показа информации о товарах с фото и описаниями, исправлена ошибка с JSON.stringify в onclick для фото поликарбоната (используется глобальная переменная), расширен скрипт копирования для всех категорий, обновлен products-data.js с путями к фото для всех 10 категорий // v193: Улучшен дизайн кнопки информации о поликарбонате
+const APP_VERSION = "v204"; // v204: Интеграция галереи фотографий теплиц и инструкций по сборке - добавлена внутренняя галерея фотографий теплиц с навигацией по типам/вариантам, добавлен раздел инструкций по сборке с поиском и фильтрацией, улучшен дизайн модальных окон, оптимизирована мобильная верстка, исправлены проблемы с копированием изображений в буфер обмена на macOS, обновлен favicon - добавлена профессиональная иконка калькулятора // v203: Добавлен favicon.ico для устранения ошибки 404, настроено кеширование статических ресурсов (изображения, видео, CSS, JS) через meta-теги и .htaccess, добавлено предупреждение в раздел "Автомат для форточки" о том, что он устанавливается только на дополнительную форточку, сделаны кнопки "скачать" менее заметными (только иконка, меньший размер, приглушенный цвет), добавлена полная надпись "Скачать" в полноэкранном режиме просмотра фото, добавлены мобильные стили для product-info-modal и polycarbonate-info-modal, улучшена адаптивность всех элементов // v202: Сделана вся область названия товара кликабельной (не только иконка), кнопка информации для поликарбоната переделана в стиле product-info-link (прозрачный фон, синий цвет, интегрирована в label), улучшена интерактивность с hover-эффектами
 
 // ==================== СИСТЕМА УВЕДОМЛЕНИЙ (TOAST) ====================
 
@@ -5118,15 +5118,22 @@ function openImageModalWithGallery(imagesArray, currentIndex) {
     let nextBtn = null;
     let counterText = null;
     
-    // Кнопка скачивания (всегда показываем)
+    // Кнопка скачивания и копирования (всегда показываем)
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.style.cssText = `
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        display: flex;
+        gap: 8px;
+        z-index: 10;
+    `;
+    
     const downloadBtn = document.createElement('button');
     const currentImagePath = imagesArray[currentIdx];
     const filename = currentImagePath.split('/').pop() || `image_${currentIdx + 1}.jpg`;
     downloadBtn.innerHTML = '📥 Скачать';
     downloadBtn.style.cssText = `
-        position: absolute;
-        top: 10px;
-        left: 10px;
         background: rgba(0, 0, 0, 0.5);
         color: white;
         border: none;
@@ -5135,7 +5142,6 @@ function openImageModalWithGallery(imagesArray, currentIndex) {
         font-size: 13px;
         cursor: pointer;
         transition: all 0.2s ease;
-        z-index: 10;
         display: flex;
         align-items: center;
         gap: 6px;
@@ -5153,6 +5159,39 @@ function openImageModalWithGallery(imagesArray, currentIndex) {
         e.stopPropagation();
         downloadBedImage(currentImagePath, filename);
     });
+    
+    // Кнопка копирования в буфер обмена
+    const copyBtn = document.createElement('button');
+    copyBtn.innerHTML = '📋 Копировать';
+    copyBtn.style.cssText = `
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    `;
+    copyBtn.addEventListener('mouseenter', function() {
+        this.style.background = 'rgba(0, 0, 0, 0.7)';
+        this.style.transform = 'scale(1.05)';
+    });
+    copyBtn.addEventListener('mouseleave', function() {
+        this.style.background = 'rgba(0, 0, 0, 0.5)';
+        this.style.transform = 'scale(1)';
+    });
+    copyBtn.addEventListener('click', async function(e) {
+        e.stopPropagation();
+        await copyImageToClipboard(currentImagePath, copyBtn);
+    });
+    
+    buttonsContainer.appendChild(downloadBtn);
+    buttonsContainer.appendChild(copyBtn);
     
     if (imagesArray.length > 1) {
         // Стрелка влево
@@ -5240,12 +5279,16 @@ function openImageModalWithGallery(imagesArray, currentIndex) {
             currentIdx = newIndex;
             image.src = imagesArray[currentIdx];
             counterText.textContent = `${currentIdx + 1} / ${imagesArray.length}`;
-            // Обновляем кнопку скачивания
+            // Обновляем кнопки скачивания и копирования
             const currentImagePath = imagesArray[currentIdx];
             const filename = currentImagePath.split('/').pop() || `image_${currentIdx + 1}.jpg`;
             downloadBtn.onclick = function(e) {
                 e.stopPropagation();
                 downloadBedImage(currentImagePath, filename);
+            };
+            copyBtn.onclick = async function(e) {
+                e.stopPropagation();
+                await copyImageToClipboard(currentImagePath, copyBtn);
             };
         };
         
@@ -5279,7 +5322,7 @@ function openImageModalWithGallery(imagesArray, currentIndex) {
     if (prevBtn) imageContainer.appendChild(prevBtn);
     if (nextBtn) imageContainer.appendChild(nextBtn);
     if (counterText) imageContainer.appendChild(counterText);
-    if (downloadBtn) imageContainer.appendChild(downloadBtn);
+    imageContainer.appendChild(buttonsContainer);
     
     imageModal.appendChild(imageContainer);
     imageModal.appendChild(closeBtn);
@@ -6652,6 +6695,192 @@ function downloadVideo(url, filename) {
     document.body.removeChild(link);
     
     showSuccess('Видео скачивается...', 'Скачивание');
+}
+
+/**
+ * Копировать изображение в буфер обмена
+ * Поддерживает: Chrome/Edge (Windows, macOS, Android), Safari (macOS, iOS 13.4+), Firefox (Windows, macOS, Android)
+ * @param {string} imageUrl - URL изображения
+ * @param {HTMLElement} button - Кнопка для обратной связи
+ */
+async function copyImageToClipboard(imageUrl, button) {
+    try {
+        // Проверяем базовую поддержку Clipboard API
+        if (!navigator.clipboard) {
+            showWarning('Ваш браузер не поддерживает копирование изображений. Используйте правый клик → "Копировать изображение"', 'Копирование');
+            return;
+        }
+        
+        // Проверяем поддержку ClipboardItem (нужно для изображений)
+        if (!window.ClipboardItem) {
+            // Fallback для старых браузеров
+            showWarning('Ваш браузер не поддерживает копирование изображений. Используйте правый клик → "Копировать изображение"', 'Копирование');
+            return;
+        }
+        
+        // Загружаем изображение через fetch для получения Blob
+        let response;
+        let blobUrl = null; // Для освобождения памяти
+        try {
+            response = await fetch(imageUrl);
+            if (!response.ok) {
+                throw new Error('Не удалось загрузить изображение');
+            }
+        } catch (fetchError) {
+            // Если fetch не сработал (CORS), используем прямой URL
+            response = null;
+        }
+        
+        // Конвертируем изображение в PNG для максимальной совместимости
+        // PNG поддерживается лучше, чем JPEG на разных платформах
+        const img = new Image();
+        
+        // Если fetch сработал, используем blob URL для избежания CORS
+        if (response) {
+            const blob = await response.blob();
+            blobUrl = URL.createObjectURL(blob);
+            img.src = blobUrl;
+        } else {
+            // Если fetch не сработал, используем прямой URL
+            img.src = imageUrl;
+        }
+        
+        // Ждем загрузки изображения
+        await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = () => reject(new Error('Ошибка загрузки изображения'));
+        });
+        
+        // Создаем canvas для конвертации
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+            throw new Error('Canvas не поддерживается');
+        }
+        
+        // Устанавливаем размеры canvas (ограничиваем максимальный размер для производительности)
+        const maxDimension = 4096; // Максимальный размер для совместимости
+        let width = img.naturalWidth;
+        let height = img.naturalHeight;
+        
+        if (width > maxDimension || height > maxDimension) {
+            const ratio = Math.min(maxDimension / width, maxDimension / height);
+            width = Math.floor(width * ratio);
+            height = Math.floor(height * ratio);
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Рисуем изображение на canvas
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Освобождаем blob URL, если использовали
+        if (blobUrl) {
+            URL.revokeObjectURL(blobUrl);
+        }
+        
+        // Конвертируем в PNG Blob
+        const pngBlob = await new Promise((resolve, reject) => {
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    resolve(blob);
+                } else {
+                    reject(new Error('Не удалось конвертировать изображение'));
+                }
+            }, 'image/png', 0.95); // Качество 0.95 для баланса размера и качества
+        });
+        
+        // Пробуем скопировать PNG (наиболее совместимый формат)
+        try {
+            const clipboardItem = new ClipboardItem({
+                'image/png': pngBlob
+            });
+            await navigator.clipboard.write([clipboardItem]);
+            
+            // Успех!
+            const originalText = button.innerHTML;
+            button.innerHTML = '✅ Скопировано';
+            button.style.background = 'rgba(46, 204, 113, 0.8)';
+            showSuccess('Изображение скопировано в буфер обмена!', 'Копирование');
+            
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.style.background = 'rgba(0, 0, 0, 0.5)';
+            }, 2000);
+            
+            return;
+        } catch (pngError) {
+            // Если PNG не сработал, пробуем оригинальный формат
+            console.log('PNG не сработал, пробуем оригинальный формат:', pngError);
+            
+            // Получаем оригинальный Blob
+            let originalBlob;
+            if (response) {
+                originalBlob = await response.blob();
+            } else {
+                // Если использовали Image, конвертируем canvas обратно в оригинальный формат
+                // Но лучше использовать PNG, который мы уже создали
+                throw pngError; // Если PNG не сработал, оригинальный тоже не сработает
+            }
+            let mimeType = originalBlob.type || 'image/png';
+            
+            // Нормализуем MIME-тип
+            if (mimeType === 'image/jpeg' || mimeType === 'image/jpg') {
+                mimeType = 'image/jpeg';
+            } else if (mimeType !== 'image/png' && mimeType !== 'image/gif' && mimeType !== 'image/webp') {
+                mimeType = 'image/png'; // Используем PNG как fallback
+            }
+            
+            try {
+                const clipboardItem = new ClipboardItem({
+                    [mimeType]: originalBlob
+                });
+                await navigator.clipboard.write([clipboardItem]);
+                
+                // Успех!
+                const originalText = button.innerHTML;
+                button.innerHTML = '✅ Скопировано';
+                button.style.background = 'rgba(46, 204, 113, 0.8)';
+                showSuccess('Изображение скопировано в буфер обмена!', 'Копирование');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.background = 'rgba(0, 0, 0, 0.5)';
+                }, 2000);
+                
+                return;
+            } catch (originalError) {
+                throw new Error('Не удалось скопировать ни PNG, ни оригинальный формат');
+            }
+        }
+        
+    } catch (error) {
+        console.error('Ошибка при копировании изображения:', error);
+        
+        // Определяем тип ошибки для более понятного сообщения
+        let errorMessage = 'Не удалось скопировать изображение. ';
+        
+        if (error.message.includes('CORS') || error.message.includes('cross-origin')) {
+            errorMessage += 'Проблема с доступом к изображению. ';
+        } else if (error.message.includes('permission') || error.name === 'NotAllowedError') {
+            errorMessage += 'Нет разрешения на доступ к буферу обмена. ';
+        }
+        
+        errorMessage += 'Используйте правый клик → "Копировать изображение" или кнопку "Скачать"';
+        
+        showWarning(errorMessage, 'Копирование');
+        
+        // Сбрасываем кнопку
+        const originalText = button.innerHTML;
+        button.innerHTML = '❌ Ошибка';
+        button.style.background = 'rgba(231, 76, 60, 0.8)';
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.style.background = 'rgba(0, 0, 0, 0.5)';
+        }, 2000);
+    }
 }
 
 window.applyBedsSelection = applyBedsSelection;
@@ -8233,6 +8462,975 @@ if (document.readyState === 'loading') {
     if (document.getElementById("polycarbonate") && document.getElementById("polycarbonate").value) {
         handlePolycarbonateChange();
     }
+}
+
+/**
+ * Показать галерею фотографий теплиц
+ * Сначала выбор типа теплицы, затем варианта, затем просмотр фотографий
+ */
+function showGreenhousesGallery() {
+    if (!window.GREENHOUSES_DATA || !window.GREENHOUSES_PHOTOS_LIST) {
+        showWarning("Данные о теплицах не загружены", "Ошибка");
+        return;
+    }
+    
+    // Создаем модальное окно
+    const modal = document.createElement('div');
+    modal.className = 'greenhouses-gallery-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        border-radius: 12px;
+        max-width: 900px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        position: relative;
+    `;
+    
+    // Заголовок
+    const header = document.createElement('div');
+    header.style.cssText = `
+        padding: 20px 25px;
+        border-bottom: 2px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8f9fa;
+        border-radius: 12px 12px 0 0;
+    `;
+    
+    const title = document.createElement('h2');
+    title.className = 'modal-title';
+    title.textContent = '📸 Фотографии теплиц';
+    title.style.cssText = `
+        margin: 0;
+        font-size: 22px;
+        color: #2c3e50;
+        font-weight: 600;
+    `;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '×';
+    closeBtn.style.cssText = `
+        background: none;
+        border: none;
+        font-size: 32px;
+        color: #666;
+        cursor: pointer;
+        padding: 0;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    `;
+    closeBtn.addEventListener('mouseenter', function() {
+        this.style.background = '#e0e0e0';
+        this.style.color = '#333';
+    });
+    closeBtn.addEventListener('mouseleave', function() {
+        this.style.background = 'none';
+        this.style.color = '#666';
+    });
+    closeBtn.addEventListener('click', function() {
+        document.body.removeChild(modal);
+    });
+    
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+    
+    // Контейнер для содержимого (будет меняться в зависимости от шага)
+    const contentContainer = document.createElement('div');
+    contentContainer.style.cssText = `
+        padding: 25px;
+    `;
+    
+    // Функция для показа выбора типа теплицы
+    function showTypeSelection() {
+        contentContainer.innerHTML = '';
+        
+        const description = document.createElement('p');
+        description.textContent = 'Выберите тип теплицы:';
+        description.style.cssText = `
+            margin: 0 0 20px 0;
+            font-size: 16px;
+            color: #555;
+        `;
+        contentContainer.appendChild(description);
+        
+        const typesGrid = document.createElement('div');
+        typesGrid.style.cssText = `
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        `;
+        
+        const allTypes = window.getAllGreenhouseTypes();
+        allTypes.forEach(type => {
+            // Получаем иконку: сначала проверяем явно указанное фото, иначе первое фото из первого варианта
+            let iconPhoto = type.iconPhoto || null;
+            if (!iconPhoto) {
+                const variantNames = Object.keys(type.variants);
+                for (let i = 0; i < variantNames.length; i++) {
+                    const photos = window.GREENHOUSES_PHOTOS_LIST[variantNames[i]] || [];
+                    if (photos.length > 0) {
+                        iconPhoto = photos[0];
+                        break;
+                    }
+                }
+            }
+            
+            const typeCard = document.createElement('div');
+            typeCard.style.cssText = `
+                background: #f8f9fa;
+                border: 2px solid #e0e0e0;
+                border-radius: 8px;
+                padding: 20px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                text-align: center;
+                position: relative;
+                overflow: hidden;
+            `;
+            typeCard.addEventListener('mouseenter', function() {
+                this.style.borderColor = '#3498db';
+                this.style.background = '#e8f4f8';
+                this.style.transform = 'translateY(-2px)';
+            });
+            typeCard.addEventListener('mouseleave', function() {
+                this.style.borderColor = '#e0e0e0';
+                this.style.background = '#f8f9fa';
+                this.style.transform = 'translateY(0)';
+            });
+            typeCard.addEventListener('click', function() {
+                showVariantSelection(type);
+            });
+            
+            // Иконка (фото) если есть
+            if (iconPhoto) {
+                const iconContainer = document.createElement('div');
+                iconContainer.style.cssText = `
+                    width: 100%;
+                    height: 120px;
+                    margin-bottom: 12px;
+                    border-radius: 6px;
+                    overflow: hidden;
+                    background: #e0e0e0;
+                `;
+                const iconImg = document.createElement('img');
+                iconImg.src = iconPhoto;
+                iconImg.style.cssText = `
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                `;
+                iconImg.onerror = function() {
+                    iconContainer.style.display = 'none';
+                };
+                iconContainer.appendChild(iconImg);
+                typeCard.appendChild(iconContainer);
+            }
+            
+            const typeName = document.createElement('div');
+            typeName.textContent = type.name;
+            typeName.style.cssText = `
+                font-size: 18px;
+                font-weight: 600;
+                color: #2c3e50;
+                margin-bottom: 8px;
+            `;
+            
+            const typeDesc = document.createElement('div');
+            typeDesc.textContent = type.description || '';
+            typeDesc.style.cssText = `
+                font-size: 13px;
+                color: #777;
+                line-height: 1.4;
+            `;
+            
+            typeCard.appendChild(typeName);
+            typeCard.appendChild(typeDesc);
+            typesGrid.appendChild(typeCard);
+        });
+        
+        contentContainer.appendChild(description);
+        contentContainer.appendChild(typesGrid);
+    }
+    
+    // Функция для показа выбора варианта теплицы
+    function showVariantSelection(type) {
+        contentContainer.innerHTML = '';
+        
+        // Кнопка "Назад"
+        const backBtn = document.createElement('button');
+        backBtn.innerHTML = '← Назад к типам';
+        backBtn.style.cssText = `
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.2s ease;
+        `;
+        backBtn.addEventListener('mouseenter', function() {
+            this.style.background = '#5a6268';
+        });
+        backBtn.addEventListener('mouseleave', function() {
+            this.style.background = '#6c757d';
+        });
+        backBtn.addEventListener('click', function() {
+            showTypeSelection();
+        });
+        contentContainer.appendChild(backBtn);
+        
+        const description = document.createElement('p');
+        description.innerHTML = `<strong>${type.name}</strong> — выберите вариант:`;
+        description.style.cssText = `
+            margin: 0 0 20px 0;
+            font-size: 16px;
+            color: #555;
+        `;
+        contentContainer.appendChild(description);
+        
+        const variantsList = document.createElement('div');
+        variantsList.style.cssText = `
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 12px;
+        `;
+        
+        const variants = Object.keys(type.variants);
+        variants.forEach(variantName => {
+            const variant = type.variants[variantName];
+            const photos = window.GREENHOUSES_PHOTOS_LIST[variantName] || [];
+            
+            // Пропускаем варианты без фотографий
+            if (photos.length === 0) {
+                return;
+            }
+            
+            const variantCard = document.createElement('div');
+            variantCard.style.cssText = `
+                background: #f8f9fa;
+                border: 2px solid #e0e0e0;
+                border-radius: 8px;
+                padding: 15px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            `;
+            variantCard.addEventListener('mouseenter', function() {
+                this.style.borderColor = '#3498db';
+                this.style.background = '#e8f4f8';
+                this.style.transform = 'translateY(-2px)';
+            });
+            variantCard.addEventListener('mouseleave', function() {
+                this.style.borderColor = '#e0e0e0';
+                this.style.background = '#f8f9fa';
+                this.style.transform = 'translateY(0)';
+            });
+            variantCard.addEventListener('click', function() {
+                showPhotosGallery(variantName, photos);
+            });
+            
+            const variantNameEl = document.createElement('div');
+            variantNameEl.textContent = variantName.replace('ТЕПЛИЦА ', '');
+            variantNameEl.style.cssText = `
+                font-size: 15px;
+                font-weight: 600;
+                color: #2c3e50;
+                margin-bottom: 8px;
+            `;
+            
+            const variantFrame = document.createElement('div');
+            variantFrame.textContent = `Каркас: ${variant.frame}`;
+            variantFrame.style.cssText = `
+                font-size: 13px;
+                color: #777;
+                margin-bottom: 8px;
+            `;
+            
+            const photosCount = document.createElement('div');
+            photosCount.textContent = `📸 ${photos.length} фото`;
+            photosCount.style.cssText = `
+                font-size: 12px;
+                color: #27ae60;
+                font-weight: 500;
+            `;
+            
+            variantCard.appendChild(variantNameEl);
+            variantCard.appendChild(variantFrame);
+            variantCard.appendChild(photosCount);
+            variantsList.appendChild(variantCard);
+        });
+        
+        contentContainer.appendChild(variantsList);
+    }
+    
+    // Функция для показа галереи фотографий
+    function showPhotosGallery(variantName, photos) {
+        contentContainer.innerHTML = '';
+        
+        // Кнопка "Назад"
+        const backBtn = document.createElement('button');
+        backBtn.innerHTML = '← Назад к вариантам';
+        backBtn.style.cssText = `
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.2s ease;
+        `;
+        backBtn.addEventListener('mouseenter', function() {
+            this.style.background = '#5a6268';
+        });
+        backBtn.addEventListener('mouseleave', function() {
+            this.style.background = '#6c757d';
+        });
+        backBtn.addEventListener('click', function() {
+            // Находим тип теплицы по названию варианта
+            const allTypes = window.getAllGreenhouseTypes();
+            const type = allTypes.find(t => t.variants[variantName]);
+            if (type) {
+                showVariantSelection(type);
+            } else {
+                showTypeSelection();
+            }
+        });
+        contentContainer.appendChild(backBtn);
+        
+        const description = document.createElement('p');
+        description.innerHTML = `<strong>${variantName.replace('ТЕПЛИЦА ', '')}</strong> — ${photos.length} фотографий:`;
+        description.style.cssText = `
+            margin: 0 0 20px 0;
+            font-size: 16px;
+            color: #555;
+        `;
+        contentContainer.appendChild(description);
+        
+        // Галерея миниатюр
+        const galleryGrid = document.createElement('div');
+        galleryGrid.style.cssText = `
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+        `;
+        
+        photos.forEach((photoPath, index) => {
+            const photoCard = document.createElement('div');
+            photoCard.style.cssText = `
+                position: relative;
+                height: 200px;
+                border-radius: 8px;
+                overflow: hidden;
+                cursor: pointer;
+                border: 2px solid #e0e0e0;
+                transition: all 0.2s ease;
+                background: #f0f0f0;
+            `;
+            photoCard.addEventListener('mouseenter', function() {
+                this.style.borderColor = '#3498db';
+                this.style.transform = 'scale(1.05)';
+            });
+            photoCard.addEventListener('mouseleave', function() {
+                this.style.borderColor = '#e0e0e0';
+                this.style.transform = 'scale(1)';
+            });
+            photoCard.addEventListener('click', function(e) {
+                // Не открываем галерею при клике на кнопку скачать
+                if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+                    openImageModalWithGallery(photos, index);
+                }
+            });
+            
+            const img = document.createElement('img');
+            img.src = photoPath;
+            img.style.cssText = `
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+            `;
+            img.onerror = function() {
+                this.style.display = 'none';
+                photoCard.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999; font-size: 12px;">Ошибка загрузки</div>';
+            };
+            
+            // Кнопка скачать
+            const downloadBtn = document.createElement('button');
+            const filename = photoPath.split('/').pop() || `photo_${index + 1}.jpg`;
+            downloadBtn.innerHTML = '📥';
+            downloadBtn.style.cssText = `
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                width: 32px;
+                height: 32px;
+                background: rgba(0, 0, 0, 0.3);
+                border: none;
+                border-radius: 6px;
+                color: white;
+                font-size: 16px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+                z-index: 5;
+            `;
+            downloadBtn.addEventListener('mouseenter', function() {
+                this.style.background = 'rgba(0, 0, 0, 0.6)';
+                this.style.transform = 'scale(1.1)';
+            });
+            downloadBtn.addEventListener('mouseleave', function() {
+                this.style.background = 'rgba(0, 0, 0, 0.3)';
+                this.style.transform = 'scale(1)';
+            });
+            downloadBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                downloadBedImage(photoPath, filename);
+            });
+            
+            // Кнопка копирования
+            const copyBtn = document.createElement('button');
+            copyBtn.innerHTML = '📋';
+            copyBtn.style.cssText = `
+                position: absolute;
+                top: 8px;
+                right: 48px;
+                width: 32px;
+                height: 32px;
+                background: rgba(0, 0, 0, 0.3);
+                border: none;
+                border-radius: 6px;
+                color: white;
+                font-size: 16px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+                z-index: 5;
+            `;
+            copyBtn.addEventListener('mouseenter', function() {
+                this.style.background = 'rgba(0, 0, 0, 0.6)';
+                this.style.transform = 'scale(1.1)';
+            });
+            copyBtn.addEventListener('mouseleave', function() {
+                this.style.background = 'rgba(0, 0, 0, 0.3)';
+                this.style.transform = 'scale(1)';
+            });
+            copyBtn.addEventListener('click', async function(e) {
+                e.stopPropagation();
+                await copyImageToClipboard(photoPath, copyBtn);
+            });
+            
+            photoCard.appendChild(img);
+            photoCard.appendChild(downloadBtn);
+            photoCard.appendChild(copyBtn);
+            galleryGrid.appendChild(photoCard);
+        });
+        
+        contentContainer.appendChild(galleryGrid);
+    }
+    
+    // Инициализация - показываем выбор типа
+    showTypeSelection();
+    
+    modalContent.appendChild(header);
+    modalContent.appendChild(contentContainer);
+    modal.appendChild(modalContent);
+    
+    // Закрытие по клику на фон
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+        }
+    });
+    
+    document.body.appendChild(modal);
+}
+
+// Экспорт функции для использования в HTML
+if (typeof window !== 'undefined') {
+    window.showGreenhousesGallery = showGreenhousesGallery;
+}
+
+/**
+ * Показать модальное окно с инструкциями по сборке теплиц
+ * Простой интерфейс для быстрого поиска и скачивания инструкций
+ */
+function showInstructionsModal() {
+    // Проверяем наличие данных об инструкциях
+    if (typeof INSTRUCTIONS_DATA === 'undefined') {
+        showError('Данные об инструкциях не загружены', 'Ошибка');
+        return;
+    }
+    
+    // Создаем модальное окно
+    const modal = document.createElement('div');
+    modal.className = 'instructions-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.className = 'instructions-modal-content';
+    modalContent.style.cssText = `
+        background: white;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 650px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        position: relative;
+    `;
+    
+    // Заголовок - компактный
+    const header = document.createElement('div');
+    header.style.cssText = `
+        padding: 12px 16px;
+        border-bottom: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8f9fa;
+        border-radius: 12px 12px 0 0;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    `;
+    
+    const title = document.createElement('h2');
+    title.className = 'modal-title';
+    title.textContent = '📖 Инструкции по сборке теплиц';
+    title.style.cssText = `
+        margin: 0;
+        font-size: 18px;
+        color: #2c3e50;
+        font-weight: 600;
+    `;
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '×';
+    closeBtn.style.cssText = `
+        background: none;
+        border: none;
+        font-size: 32px;
+        color: #666;
+        cursor: pointer;
+        padding: 0;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+    `;
+    closeBtn.addEventListener('mouseenter', function() {
+        this.style.background = '#e0e0e0';
+        this.style.color = '#333';
+    });
+    closeBtn.addEventListener('mouseleave', function() {
+        this.style.background = 'none';
+        this.style.color = '#666';
+    });
+    closeBtn.addEventListener('click', function() {
+        document.body.removeChild(modal);
+    });
+    
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+    
+    // Поиск - компактный
+    const searchContainer = document.createElement('div');
+    searchContainer.style.cssText = `
+        padding: 10px 12px;
+        border-bottom: 1px solid #e0e0e0;
+        background: #f8f9fa;
+        position: sticky;
+        top: 70px;
+        z-index: 9;
+    `;
+    
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.placeholder = '🔍 Поиск по типу теплицы или размеру...';
+    searchInput.style.cssText = `
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 13px;
+        box-sizing: border-box;
+        transition: all 0.15s ease;
+        background: white;
+    `;
+    searchInput.addEventListener('focus', function() {
+        this.style.borderColor = '#3498db';
+    });
+    searchInput.addEventListener('blur', function() {
+        this.style.borderColor = '#e0e0e0';
+    });
+    
+    searchContainer.appendChild(searchInput);
+    
+    // Контейнер для инструкций - компактный
+    const contentContainer = document.createElement('div');
+    contentContainer.style.cssText = `
+        padding: 12px;
+    `;
+    
+    // Функция для отображения всех инструкций
+    function renderInstructions(searchTerm = '') {
+        contentContainer.innerHTML = '';
+        
+        const allTypes = window.getAllGreenhouseTypes();
+        let hasResults = false;
+        let isFirstType = true;
+        
+        allTypes.forEach(type => {
+            const instructions = INSTRUCTIONS_DATA[type.id];
+            if (!instructions) return;
+            
+            // Фильтрация по поисковому запросу
+            const searchLower = searchTerm.toLowerCase();
+            const typeNameMatch = type.name.toLowerCase().includes(searchLower) || 
+                                 type.fullName.toLowerCase().includes(searchLower);
+            
+            if (searchTerm && !typeNameMatch) {
+                // Проверяем, есть ли совпадения в инструкциях
+                let hasMatchingInstructions = false;
+                for (const size in instructions.instructions) {
+                    for (const inst of instructions.instructions[size]) {
+                        if (inst.filename.toLowerCase().includes(searchLower) || 
+                            size.includes(searchLower)) {
+                            hasMatchingInstructions = true;
+                            break;
+                        }
+                    }
+                    if (hasMatchingInstructions) break;
+                }
+                if (!hasMatchingInstructions) return;
+            }
+            
+            hasResults = true;
+            
+            // Заголовок типа теплицы с фото - более заметный
+            const typeHeader = document.createElement('div');
+            typeHeader.style.cssText = `
+                margin-top: ${isFirstType ? '0' : '20px'};
+                margin-bottom: 12px;
+                padding: 12px 14px;
+                background: linear-gradient(to right, #f0f7ff 0%, #ffffff 100%);
+                border-left: 4px solid #3498db;
+                border-radius: 6px;
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            `;
+            
+            // Фотография теплицы
+            let iconPhoto = type.iconPhoto || null;
+            if (!iconPhoto) {
+                const variantNames = Object.keys(type.variants);
+                for (let i = 0; i < variantNames.length; i++) {
+                    const photos = window.GREENHOUSES_PHOTOS_LIST[variantNames[i]] || [];
+                    if (photos.length > 0) {
+                        iconPhoto = photos[0];
+                        break;
+                    }
+                }
+            }
+            
+            if (iconPhoto) {
+                const photoContainer = document.createElement('div');
+                photoContainer.style.cssText = `
+                    width: 80px;
+                    height: 80px;
+                    min-width: 80px;
+                    border-radius: 6px;
+                    overflow: hidden;
+                    background: #e0e0e0;
+                    border: 2px solid #e8e8e8;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+                `;
+                const photoImg = document.createElement('img');
+                photoImg.src = iconPhoto;
+                photoImg.style.cssText = `
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                `;
+                photoImg.onerror = function() {
+                    photoContainer.style.display = 'none';
+                };
+                photoContainer.appendChild(photoImg);
+                typeHeader.appendChild(photoContainer);
+            }
+            
+            const typeInfo = document.createElement('div');
+            typeInfo.style.cssText = `
+                flex: 1;
+            `;
+            
+            const typeTitle = document.createElement('h3');
+            typeTitle.textContent = type.name;
+            typeTitle.style.cssText = `
+                margin: 0 0 5px 0;
+                font-size: 19px;
+                color: #2c3e50;
+                font-weight: 700;
+                letter-spacing: -0.2px;
+            `;
+            
+            const typeDesc = document.createElement('div');
+            typeDesc.textContent = type.description || '';
+            typeDesc.style.cssText = `
+                font-size: 13px;
+                color: #5a6c7d;
+                line-height: 1.4;
+            `;
+            
+            typeInfo.appendChild(typeTitle);
+            typeInfo.appendChild(typeDesc);
+            typeHeader.appendChild(typeInfo);
+            contentContainer.appendChild(typeHeader);
+            
+            isFirstType = false;
+            
+            // Группируем инструкции по размерам
+            const sizes = Object.keys(instructions.instructions).sort((a, b) => {
+                if (a === 'other') return 1;
+                if (b === 'other') return -1;
+                return parseFloat(a) - parseFloat(b);
+            });
+            
+            sizes.forEach(size => {
+                const sizeInstructions = instructions.instructions[size];
+                
+                // Заголовок размера - очень компактный, почти незаметный
+                const sizeHeader = document.createElement('div');
+                sizeHeader.style.cssText = `
+                    margin-top: 6px;
+                    margin-bottom: 3px;
+                    margin-left: 2px;
+                    font-size: 10px;
+                    font-weight: 500;
+                    color: #bdc3c7;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                `;
+                sizeHeader.textContent = size === 'other' ? 'Другие размеры' : `${size} м`;
+                contentContainer.appendChild(sizeHeader);
+                
+                // Список инструкций для этого размера - максимально компактный
+                sizeInstructions.forEach(inst => {
+                    const instCard = document.createElement('div');
+                    instCard.style.cssText = `
+                        background: white;
+                        border: 1px solid #e8e8e8;
+                        border-radius: 4px;
+                        padding: 7px 10px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        gap: 8px;
+                        margin-bottom: 3px;
+                        transition: all 0.15s ease;
+                        width: 100%;
+                        box-sizing: border-box;
+                    `;
+                    instCard.addEventListener('mouseenter', function() {
+                        this.style.borderColor = '#3498db';
+                        this.style.boxShadow = '0 2px 8px rgba(52, 152, 219, 0.15)';
+                        this.style.background = '#f8fbff';
+                        this.style.transform = 'translateX(2px)';
+                    });
+                    instCard.addEventListener('mouseleave', function() {
+                        this.style.borderColor = '#e5e5e5';
+                        this.style.boxShadow = 'none';
+                        this.style.background = 'white';
+                        this.style.transform = 'translateX(0)';
+                    });
+                    
+                    // Название файла - занимает только необходимое место
+                    const fileName = document.createElement('div');
+                    fileName.textContent = inst.filename.replace('.pdf', '');
+                    fileName.style.cssText = `
+                        font-size: 13px;
+                        font-weight: 400;
+                        color: #34495e;
+                        flex: 1 1 auto;
+                        min-width: 0;
+                        word-break: break-word;
+                        line-height: 1.3;
+                    `;
+                    
+                    // Кнопки действий - сразу после текста
+                    const buttonsContainer = document.createElement('div');
+                    buttonsContainer.style.cssText = `
+                        display: flex;
+                        gap: 5px;
+                        flex-shrink: 0;
+                    `;
+                    
+                    // Кнопка "Открыть"
+                    const openBtn = document.createElement('button');
+                    openBtn.innerHTML = '👁️ Открыть';
+                    openBtn.style.cssText = `
+                        background: #3498db;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        padding: 5px 12px;
+                        font-size: 12px;
+                        cursor: pointer;
+                        transition: all 0.15s ease;
+                        font-weight: 500;
+                        white-space: nowrap;
+                    `;
+                    openBtn.addEventListener('mouseenter', function() {
+                        this.style.background = '#2980b9';
+                    });
+                    openBtn.addEventListener('mouseleave', function() {
+                        this.style.background = '#3498db';
+                    });
+                    openBtn.addEventListener('click', function() {
+                        window.open(inst.path, '_blank');
+                    });
+                    
+                    // Кнопка "Скачать"
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.innerHTML = '📥 Скачать';
+                    downloadBtn.style.cssText = `
+                        background: #27ae60;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        padding: 5px 12px;
+                        font-size: 12px;
+                        cursor: pointer;
+                        transition: all 0.15s ease;
+                        font-weight: 500;
+                        white-space: nowrap;
+                    `;
+                    downloadBtn.addEventListener('mouseenter', function() {
+                        this.style.background = '#229954';
+                    });
+                    downloadBtn.addEventListener('mouseleave', function() {
+                        this.style.background = '#27ae60';
+                    });
+                    downloadBtn.addEventListener('click', function() {
+                        const link = document.createElement('a');
+                        link.href = inst.path;
+                        link.download = inst.filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        showSuccess('Инструкция скачивается...', 'Скачивание');
+                    });
+                    
+                    buttonsContainer.appendChild(openBtn);
+                    buttonsContainer.appendChild(downloadBtn);
+                    
+                    instCard.appendChild(fileName);
+                    instCard.appendChild(buttonsContainer);
+                    contentContainer.appendChild(instCard);
+                });
+            });
+        });
+        
+        if (!hasResults) {
+            const noResults = document.createElement('div');
+            noResults.style.cssText = `
+                text-align: center;
+                padding: 40px;
+                color: #999;
+                font-size: 16px;
+            `;
+            noResults.textContent = 'Ничего не найдено';
+            contentContainer.appendChild(noResults);
+        }
+    }
+    
+    // Обработчик поиска
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            renderInstructions(this.value);
+        }, 300);
+    });
+    
+    // Инициализация - показываем все инструкции
+    renderInstructions();
+    
+    modalContent.appendChild(header);
+    modalContent.appendChild(searchContainer);
+    modalContent.appendChild(contentContainer);
+    modal.appendChild(modalContent);
+    
+    // Закрытие по клику на фон
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+        }
+    });
+    
+    // Закрытие по Escape
+    const escapeHandler = function(e) {
+        if (e.key === 'Escape') {
+            document.body.removeChild(modal);
+            document.removeEventListener('keydown', escapeHandler);
+        }
+    };
+    document.addEventListener('keydown', escapeHandler);
+    
+    document.body.appendChild(modal);
+}
+
+// Экспорт функции для использования в HTML
+if (typeof window !== 'undefined') {
+    window.showInstructionsModal = showInstructionsModal;
 }
 
 

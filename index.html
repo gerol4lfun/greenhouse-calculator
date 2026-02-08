@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Калькулятор доставки и стоимости теплиц</title>
   
-  <!-- Favicon -->
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+  <!-- Favicon - иконка калькулятора -->
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="shortcut icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
   
   <!-- Кеширование статических ресурсов -->
   <meta http-equiv="Cache-Control" content="public, max-age=31536000">
@@ -19,7 +20,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.28.0/dist/umd/supabase.min.js"></script>
   
   <!-- cache-bust: Safari иногда держит старые стили, поэтому версия должна меняться при правках -->
-    <link rel="stylesheet" href="css/styles.css?v=203">
+    <link rel="stylesheet" href="css/styles.css?v=204">
 </head>
   <body>
     <!-- Контейнер для уведомлений -->
@@ -180,7 +181,7 @@
           <h3 style="margin: 20px 0 15px 0; font-size: 18px; color: #2c3e50; font-weight: 600;">📚 Полезные материалы</h3>
           <div class="materials-grid">
             <!-- Карточка материала: Фотографии теплиц -->
-            <a href="https://disk.yandex.ru/d/ZwExO5tG93qrmQ" target="_blank" class="material-card">
+            <a href="#" onclick="event.preventDefault(); showGreenhousesGallery(); return false;" class="material-card">
               <div class="material-icon">📸</div>
               <div class="material-content">
                 <h3>Фотографии теплиц</h3>
@@ -190,7 +191,7 @@
             </a>
             
             <!-- Карточка материала: Инструкции по сборке -->
-            <a href="https://disk.yandex.ru/d/fV2vS7I7dRhdXg" target="_blank" class="material-card">
+            <a href="#" onclick="event.preventDefault(); showInstructionsModal(); return false;" class="material-card">
               <div class="material-icon">📖</div>
               <div class="material-content">
                 <h3>Инструкции по сборке</h3>
@@ -541,8 +542,11 @@
     </div>
 
     <!-- cache-bust: версия скрипта должна быть синхронизирована с APP_VERSION в scripts.js -->
-    <script src="js/products-data.js?v=203"></script>
-    <script src="js/scripts.js?v=203"></script>
+    <script src="js/products-data.js?v=204"></script>
+    <script src="js/greenhouses-data.js?v=204"></script>
+    <script src="js/greenhouses-photos-list.js?v=204"></script>
+    <script src="js/instructions-data.js?v=204"></script>
+    <script src="js/scripts.js?v=204"></script>
   </div>
 </body>
 </html>
