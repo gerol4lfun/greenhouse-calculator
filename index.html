@@ -5,13 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Калькулятор доставки и стоимости теплиц</title>
   
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+  
+  <!-- Кеширование статических ресурсов -->
+  <meta http-equiv="Cache-Control" content="public, max-age=31536000">
+  <meta http-equiv="Expires" content="31536000">
+  
   <!-- Яндекс.Карты -->
   <script src="https://api-maps.yandex.ru/2.1/?apikey=a6150be2-d00e-4551-b9f9-2a4f8118d04d&lang=ru_RU" type="text/javascript"></script>
   <!-- Supabase JavaScript SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.28.0/dist/umd/supabase.min.js"></script>
   
   <!-- cache-bust: Safari иногда держит старые стили, поэтому версия должна меняться при правках -->
-    <link rel="stylesheet" href="css/styles.css?v=191">
+    <link rel="stylesheet" href="css/styles.css?v=203">
 </head>
   <body>
     <!-- Контейнер для уведомлений -->
@@ -247,8 +255,17 @@
             <option value="" disabled selected>Выберите каркас</option>
           </select>
         </div>
-        <div class="parameters">
-          <label for="polycarbonate">Поликарбонат:</label>
+        <div class="parameters parameters-with-icon">
+          <label for="polycarbonate" class="label-with-icon" onclick="event.preventDefault(); showPolycarbonateInfo();" title="Подробнее о поликарбонате">
+            <span>Поликарбонат:</span>
+            <span class="polycarbonate-info-link">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.2" fill="none"/>
+                <path d="M8 11V8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                <circle cx="8" cy="5" r="0.6" fill="currentColor"/>
+              </svg>
+            </span>
+          </label>
           <select id="polycarbonate" onchange="handlePolycarbonateChange(); updateGiftsBlockPreview(); calculateGreenhouseCost()">
             <option value="" disabled selected>Выберите поликарбонат</option>
             <!-- Опции добавятся через JavaScript -->
@@ -317,7 +334,16 @@
         <option value="4">4</option>
         <option value="5">5</option>
       </select>
-      <span class="product-name">Капельный полив механический</span>
+      <span class="product-name" onclick="event.preventDefault(); showProductInfo('drip-irrigation-mech');" title="Подробнее о товаре">
+        Капельный полив механический
+        <span class="product-info-link">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.2" fill="none"/>
+            <path d="M8 11V8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            <circle cx="8" cy="5" r="0.6" fill="currentColor"/>
+          </svg>
+        </span>
+      </span>
       <span class="price">1.690 рублей</span>
     </label>
   </div>
@@ -333,7 +359,16 @@
         <option value="4">4</option>
         <option value="5">5</option>
       </select>
-      <span class="product-name">Капельный полив автоматический</span>
+      <span class="product-name" onclick="event.preventDefault(); showProductInfo('drip-irrigation-auto');" title="Подробнее о товаре">
+        Капельный полив автоматический
+        <span class="product-info-link">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.2" fill="none"/>
+            <path d="M8 11V8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            <circle cx="8" cy="5" r="0.6" fill="currentColor"/>
+          </svg>
+        </span>
+      </span>
       <span class="price">4.490 рублей</span>
     </label>
   </div>
@@ -349,7 +384,16 @@
         <option value="4">4</option>
         <option value="5">5</option>
       </select>
-      <span class="product-name">Автомат для форточки</span>
+      <span class="product-name" onclick="event.preventDefault(); showProductInfo('thermodrive');" title="Подробнее о товаре">
+        Автомат для форточки
+        <span class="product-info-link">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.2" fill="none"/>
+            <path d="M8 11V8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            <circle cx="8" cy="5" r="0.6" fill="currentColor"/>
+          </svg>
+        </span>
+      </span>
       <span class="price">2.590 рублей</span>
     </label>
   </div>
@@ -365,7 +409,16 @@
         <option value="4">4</option>
         <option value="5">5</option>
       </select>
-      <span class="product-name">Дополнительная форточка</span>
+      <span class="product-name" onclick="event.preventDefault(); showProductInfo('doors-windows-window');" title="Подробнее о товаре">
+        Дополнительная форточка
+        <span class="product-info-link">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.2" fill="none"/>
+            <path d="M8 11V8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            <circle cx="8" cy="5" r="0.6" fill="currentColor"/>
+          </svg>
+        </span>
+      </span>
       <span class="price">1.490 рублей</span>
     </label>
   </div>
@@ -381,7 +434,16 @@
         <option value="4">4</option>
         <option value="5">5</option>
       </select>
-      <span class="product-name">Оцинкованная лента 30 м</span>
+      <span class="product-name" onclick="event.preventDefault(); showProductInfo('tapes-galvanized');" title="Подробнее о товаре">
+        Оцинкованная лента 30 м
+        <span class="product-info-link">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.2" fill="none"/>
+            <path d="M8 11V8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            <circle cx="8" cy="5" r="0.6" fill="currentColor"/>
+          </svg>
+        </span>
+      </span>
       <span class="price">1.990 рублей</span>
     </label>
   </div>
@@ -397,7 +459,16 @@
         <option value="4">4</option>
         <option value="5">5</option>
       </select>
-      <span class="product-name">Паропропускная лента 25 м</span>
+      <span class="product-name" onclick="event.preventDefault(); showProductInfo('tapes-vapor-permeable');" title="Подробнее о товаре">
+        Паропропускная лента 25 м
+        <span class="product-info-link">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.2" fill="none"/>
+            <path d="M8 11V8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            <circle cx="8" cy="5" r="0.6" fill="currentColor"/>
+          </svg>
+        </span>
+      </span>
       <span class="price">1.590 рублей</span>
     </label>
   </div>
@@ -470,7 +541,8 @@
     </div>
 
     <!-- cache-bust: версия скрипта должна быть синхронизирована с APP_VERSION в scripts.js -->
-    <script src="js/scripts.js?v=191"></script>
+    <script src="js/products-data.js?v=203"></script>
+    <script src="js/scripts.js?v=203"></script>
   </div>
 </body>
 </html>

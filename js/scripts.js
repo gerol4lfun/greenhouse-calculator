@@ -1,7 +1,7 @@
 
 // Константа для контроля отладки
 const DEBUG = false; // Отключено для продакшена
-const APP_VERSION = "v191"; // v191: Улучшена функция склонения населенных пунктов - теперь правильно склоняются посёлки, сёла и другие типы населенных пунктов // v190: Исправлена очистка restrictions в боте - теперь правильно обновляются в базе
+const APP_VERSION = "v203"; // v203: Добавлен favicon.ico для устранения ошибки 404, настроено кеширование статических ресурсов (изображения, видео, CSS, JS) через meta-теги и .htaccess, добавлено предупреждение в раздел "Автомат для форточки" о том, что он устанавливается только на дополнительную форточку, сделаны кнопки "скачать" менее заметными (только иконка, меньший размер, приглушенный цвет), добавлена полная надпись "Скачать" в полноэкранном режиме просмотра фото, добавлены мобильные стили для product-info-modal и polycarbonate-info-modal, улучшена адаптивность всех элементов // v202: Сделана вся область названия товара кликабельной (не только иконка), кнопка информации для поликарбоната переделана в стиле product-info-link (прозрачный фон, синий цвет, интегрирована в label), улучшена интерактивность с hover-эффектами // v201: Улучшен дизайн кнопок информации о товарах - перемещены в название товара как тонкая иконка справа, новый стиль product-info-link с прозрачным фоном и синим цветом, более профессиональная интеграция // v200: Исправлена ошибка toggleFAQAnswer is not defined - добавлена функция toggleFAQAnswer, исправлены символы в toggleFAQ (используются + и − вместо ▼ и ▲), добавлен вопрос "Количество листов поликарбоната для теплиц" в FAQ с полными данными по всем 8 типам теплиц // v199: Повернуты последние 2 фото термопривода (photo_6.jpg и photo_7.jpg) на 90 градусов вправо, обновлен скрипт копирования для автоматического исправления ориентации всех изображений при копировании // v198: Создан скрипт fix_image_orientation.sh для автоматического исправления ориентации всех изображений на основе EXIF данных, применена автоматическая коррекция ориентации для всех фото // v197: Исправлены пути к фото в скрипте копирования (паропропускная лента, оцинкованная лента, боковые форточки), все фото и видео проверены и скопированы // v196: Исправлен путь к фото термопривода в скрипте копирования, убрано несуществующее photo_8.jpg из products-data.js, добавлена кнопка скачивания в полноэкранном режиме просмотра фото (openImageModalWithGallery) // v195: Заполнены описания для всех категорий товаров в products-data.js на основе информации из FAQ и логики назначения товаров // v194: Добавлены кнопки информации о товарах в разделе "Дополнительные товары", создана функция showProductInfo() для показа информации о товарах с фото и описаниями, исправлена ошибка с JSON.stringify в onclick для фото поликарбоната (используется глобальная переменная), расширен скрипт копирования для всех категорий, обновлен products-data.js с путями к фото для всех 10 категорий // v193: Улучшен дизайн кнопки информации о поликарбонате
 
 // ==================== СИСТЕМА УВЕДОМЛЕНИЙ (TOAST) ====================
 
@@ -4272,6 +4272,11 @@ const faqData = {
         },
         {
             category: "materials",
+            question: "Количество листов поликарбоната для теплиц",
+            answer: "📐 Размер листа: 2.1 × 6 м\n\nВ таблице указано количество листов поликарбоната для различных моделей теплиц. Данные сгруппированы по типу теплицы, длине и ширине конструкции. Если требуется дополнительное оформление (отдельные листы нужной длины), они также указаны.\n\n1. БОЯРСКАЯ (Арочная)\nРазмеры (ширина): 2,5 м, 3 м, 3,5 м, 4 м\nДлина: 4 м, 6 м, 8 м, 10 м, 12 м\n• 4 м: 2,5 м – 3 листа; 3 м – 3 листа; 3,5 м – 3 листа; 4 м – 4 листа + 1 лист 3 м + 1 лист 4 м\n• 6 м: 2,5 м – 4 листа; 3 м – 4 листа; 3,5 м – 4 листа; 4 м – 6 листов + 1 лист 3 м\n• 8 м: 2,5 м – 5 листов; 3 м – 5 листов; 3,5 м – 5 листов; 4 м – 7 листов + 1 лист 3 м + 1 лист 2 м\n• 10 м: 2,5 м – 6 листов; 3 м – 6 листов; 3,5 м – 6 листов; 4 м – 8 листов + 1 лист 3 м + 1 лист 4 м\n• 12 м: 2,5 м – 7 листов; 3 м – 7 листов; 3,5 м – 7 листов; 4 м – 10 листов + 1 лист 3 м\n\n2. ЦАРСКАЯ (Прямостенная)\nРазмеры (ширина): 2,5 м, 3 м, 3,5 м, 4 м\nДлина: 4 м, 6 м, 8 м, 10 м, 12 м\n• 4 м: 2,5 м – 3 листа; 3 м – 3 листа + 2 листа по 2 м; 3,5 м – 4 листа + 1 лист 2 м; 4 м – 5 листов + 1 лист 3 м + 1 лист 2 м\n• 6 м: 2,5 м – 4 листа; 3 м – 5 листов; 3,5 м – 5 листов + 2 листа по 2 м; 4 м – 7 листов + 1 лист 3 м\n• 8 м: 2,5 м – 5 листов; 3 м – 6 листов + 1 лист 2 м; 3,5 м – 7 листов; 4 м – 8 листов + 1 лист 3 м + 1 лист 4 м\n• 10 м: 2,5 м – 6 листов; 3 м – 7 листов + 2 листа по 2 м; 3,5 м – 8 листов + 1 лист 2 м; 4 м – 10 листов + 1 лист 3 м + 1 лист 2 м\n• 12 м: 2,5 м – 7 листов; 3 м – 9 листов; 3,5 м – 9 листов + 2 листа по 2 м; 4 м – 12 листов + 1 лист 3 м\n\n3. СТРЕЛКА (Каплевидная)\nРазмеры (ширина): 2,5 м, 3 м, 3,5 м\nДлина: 4 м, 6 м, 8 м, 10 м, 12 м\n• 4 м: 2,5 м – 3 листа; 3 м – 3 листа; 3,5 м – 4 листа\n• 6 м: 2,5 м – 4 листа; 3 м – 4 листа; 3,5 м – 5 листов + 1 лист 2 м\n• 8 м: 2,5 м – 5 листов; 3 м – 5 листов; 3,5 м – 6 листов + 1 лист 4 м\n• 10 м: 2,5 м – 6 листов; 3 м – 6 листов; 3,5 м – 8 листов\n• 12 м: 2,5 м – 7 листов; 3 м – 7 листов; 3,5 м – 9 листов + 1 лист 2 м\n\n4. ДОМИК\nРазмеры (ширина): 2,5 м, 3 м, 3,5 м, 4 м\nДлина: 4 м, 6 м, 8 м, 10 м, 12 м\n• 4 м: 2,5 м – 3 листа; 3 м – 3 листа + 1 лист 4 м; 3,5 м – 4 листа + 1 лист 3 м; 4 м – 2 рулона по 6 м + 1 лист 3 м + 2 рулона по 10 м\n• 6 м: 2,5 м – 4 листа; 3 м – 5 листов; 3,5 м – 5 листов + 1 лист 3 м + 1 лист 2 м; 4 м – 2 рулона по 6 м + 1 лист 3 м + 3 рулона по 10 м\n• 8 м: 2,5 м – 5 листов; 3 м – 6 листов + 1 лист 2 м; 3,5 м – 6 листов + 1 лист 4 м + 1 лист 3 м; 4 м – 2 рулона по 6 м + 1 лист 3 м + 4 рулона по 10 м\n• 10 м: 2,5 м – 6 листов; 3 м – 7 листов + 1 лист 4 м; 3,5 м – 8 листов + 1 лист 3 м; 4 м – 2 рулона по 6 м + 1 лист 3 м + 5 рулонов по 10 м\n• 12 м: 2,5 м – 7 листов; 3 м – 9 листов; 3,5 м – 9 листов + 1 лист 3 м + 1 лист 2 м; 4 м – 2 рулона по 6 м + 1 лист 3 м + 6 рулонов по 10 м\n\n5. МИТЛАЙДЕР АРОЧНЫЙ\nРазмеры (ширина): 3 м, 3,5 м\nДлина: 4 м, 6 м, 8 м, 10 м, 12 м\n• 4 м: 3 м – 3 листа + 1 лист 3 м; 3,5 м – 4 листа\n• 6 м: 3 м – 4 листа + 1 лист 3 м; 3,5 м – 4 листа + 1 лист 4 м + 1 лист 3 м\n• 8 м: 3 м – 6 листов; 3,5 м – 5 листов + 2 листа по 4 м\n• 10 м: 3 м – 6 листов + 1 лист 3 м + 1 лист 4 м; 3,5 м – 5 листов + 3 листа по 4 м + 1 лист 3 м\n• 12 м: 3 м – 6 листов + 3 листа по 4 м; 3,5 м – 6 листов + 4 листа по 4 м\n\n6. МИТЛАЙДЕР ПРЯМОСТЕННЫЙ\nРазмеры (ширина): 3 м, 3,5 м\nДлина: 4 м, 6 м, 8 м, 10 м, 12 м\n• 4 м: 3 м – 3 листа + 1 лист 4 м; 3,5 м – 4 листа + 1 лист 2 м\n• 6 м: 3 м – 5 листов; 3,5 м – 5 листов + 1 лист 4 м\n• 8 м: 3 м – 6 листов + 1 лист 2 м; 3,5 м – 7 листов\n• 10 м: 3 м – 7 листов + 1 лист 4 м; 3,5 м – 8 листов + 1 лист 2 м\n• 12 м: 3 м – 9 листов; 3,5 м – 9 листов + 1 лист 4 м\n\n7. ПРИСТЕННАЯ\nРазмеры (ширина): 2,5 м, 3 м\nДлина: 4 м, 6 м, 8 м, 10 м, 12 м\n• 4 м: 2,5 м – 3 листа; 3 м – 3 листа + 1 лист 4 м\n• 6 м: 2,5 м – 4 листа; 3 м – 5 листов\n• 8 м: 2,5 м – 5 листов; 3 м – 6 листов + 1 лист 2 м\n• 10 м: 2,5 м – 6 листов; 3 м – 7 листов + 1 лист 4 м\n• 12 м: 2,5 м – 7 листов; 3 м – 9 листов\n\n8. ПРЕМЬЕР\nРазмеры (ширина): 5 м, 6 м\nДлина: 4 м, 6 м, 8 м, 10 м, 12 м\n• 4 м: 5 м – 6 листов + 1 лист 2 м; 6 м – 6 листов + 1 лист 4 м\n• 6 м: 5 м – 8 листов; 6 м – 8 листов + 1 лист 3 м\n• 8 м: 5 м – 9 листов + 1 лист 4 м; 6 м – 10 листов + 1 лист 2 м\n• 10 м: 5 м – 11 листов + 1 лист 2 м; 6 м – 11 листов + 1 лист 4 м + 1 лист 3 м\n• 12 м: 5 м – 13 листов; 6 м – 14 листов"
+        },
+        {
+            category: "materials",
             question: "Что такое краб-система?",
             answer: "Краб-система — специальные соединители («крабы») для каркаса, крепятся на 4 болтах.\n\nПреимущества:\n• Повышают прочность и устойчивость теплицы к снеговым и ветровым нагрузкам.\n• Равномерно распределяют нагрузку, предотвращают деформации.",
             images: ["image/15.jpg"]
@@ -4955,6 +4960,8 @@ function formatFAQAnswer(text) {
 // Функция переключения FAQ (аккордеон с автоматическим сворачиванием)
 function toggleFAQ(faqId) {
     const answer = document.getElementById(faqId);
+    if (!answer) return;
+    
     const item = answer.closest('.faq-item');
     const toggle = item.querySelector('.faq-toggle');
     
@@ -4968,7 +4975,7 @@ function toggleFAQ(faqId) {
                 const otherToggle = otherItem.querySelector('.faq-toggle');
                 if (otherAnswer && otherAnswer.style.display !== 'none') {
                     otherAnswer.style.display = 'none';
-                    otherToggle.textContent = '▼';
+                    otherToggle.textContent = '+';
                     otherItem.classList.remove('expanded');
                 }
             }
@@ -4976,14 +4983,20 @@ function toggleFAQ(faqId) {
         
         // Открываем выбранный элемент
         answer.style.display = 'block';
-        toggle.textContent = '▲';
+        toggle.textContent = '−';
         item.classList.add('expanded');
     } else {
         // Закрываем текущий элемент
         answer.style.display = 'none';
-        toggle.textContent = '▼';
+        toggle.textContent = '+';
         item.classList.remove('expanded');
     }
+}
+
+// Функция для переключения FAQ по индексу (используется в поиске)
+function toggleFAQAnswer(itemIndex) {
+    const answerId = `faq-answer-${itemIndex}`;
+    toggleFAQ(answerId);
 }
 
 // Функция копирования URL в буфер обмена
@@ -5024,6 +5037,16 @@ function copyUrlToClipboard(url, button) {
 
 // Функция открытия изображения в полном размере (доступна глобально)
 function openImageModal(imageSrc) {
+    openImageModalWithGallery([imageSrc], 0);
+}
+
+function openImageModalWithGallery(imagesArray, currentIndex) {
+    if (!imagesArray || imagesArray.length === 0) return;
+    
+    let currentIdx = currentIndex || 0;
+    if (currentIdx < 0) currentIdx = 0;
+    if (currentIdx >= imagesArray.length) currentIdx = imagesArray.length - 1;
+    
     // Создаем модальное окно для просмотра изображения поверх всего
     const imageModal = document.createElement('div');
     imageModal.className = 'faq-image-modal';
@@ -5039,10 +5062,22 @@ function openImageModal(imageSrc) {
         align-items: center;
         justify-content: center;
         cursor: pointer;
+        padding: 10px;
+        box-sizing: border-box;
+    `;
+    
+    const imageContainer = document.createElement('div');
+    imageContainer.style.cssText = `
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
     `;
     
     const image = document.createElement('img');
-    image.src = imageSrc;
+    image.src = imagesArray[currentIdx];
     image.style.cssText = `
         max-width: 95%;
         max-height: 95%;
@@ -5056,19 +5091,20 @@ function openImageModal(imageSrc) {
     closeBtn.innerHTML = '×';
     closeBtn.style.cssText = `
         position: absolute;
-        top: 20px;
-        right: 20px;
-        width: 40px;
-        height: 40px;
+        top: 10px;
+        right: 10px;
+        width: 36px;
+        height: 36px;
         background: rgba(255, 255, 255, 0.2);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 30px;
+        font-size: 24px;
         color: white;
         cursor: pointer;
         transition: all 0.2s ease;
+        z-index: 10;
     `;
     closeBtn.addEventListener('mouseenter', function() {
         this.style.background = 'rgba(255, 255, 255, 0.3)';
@@ -5077,12 +5113,183 @@ function openImageModal(imageSrc) {
         this.style.background = 'rgba(255, 255, 255, 0.2)';
     });
     
-    imageModal.appendChild(image);
+    // Стрелки навигации (только если больше одного фото)
+    let prevBtn = null;
+    let nextBtn = null;
+    let counterText = null;
+    
+    // Кнопка скачивания (всегда показываем)
+    const downloadBtn = document.createElement('button');
+    const currentImagePath = imagesArray[currentIdx];
+    const filename = currentImagePath.split('/').pop() || `image_${currentIdx + 1}.jpg`;
+    downloadBtn.innerHTML = '📥 Скачать';
+    downloadBtn.style.cssText = `
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    `;
+    downloadBtn.addEventListener('mouseenter', function() {
+        this.style.background = 'rgba(0, 0, 0, 0.7)';
+        this.style.transform = 'scale(1.05)';
+    });
+    downloadBtn.addEventListener('mouseleave', function() {
+        this.style.background = 'rgba(0, 0, 0, 0.5)';
+        this.style.transform = 'scale(1)';
+    });
+    downloadBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        downloadBedImage(currentImagePath, filename);
+    });
+    
+    if (imagesArray.length > 1) {
+        // Стрелка влево
+        prevBtn = document.createElement('div');
+        prevBtn.innerHTML = '‹';
+        prevBtn.style.cssText = `
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 10;
+            user-select: none;
+        `;
+        prevBtn.addEventListener('mouseenter', function() {
+            this.style.background = 'rgba(255, 255, 255, 0.4)';
+            this.style.transform = 'translateY(-50%) scale(1.1)';
+        });
+        prevBtn.addEventListener('mouseleave', function() {
+            this.style.background = 'rgba(255, 255, 255, 0.2)';
+            this.style.transform = 'translateY(-50%) scale(1)';
+        });
+        
+        // Стрелка вправо
+        nextBtn = document.createElement('div');
+        nextBtn.innerHTML = '›';
+        nextBtn.style.cssText = `
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 10;
+            user-select: none;
+        `;
+        nextBtn.addEventListener('mouseenter', function() {
+            this.style.background = 'rgba(255, 255, 255, 0.4)';
+            this.style.transform = 'translateY(-50%) scale(1.1)';
+        });
+        nextBtn.addEventListener('mouseleave', function() {
+            this.style.background = 'rgba(255, 255, 255, 0.2)';
+            this.style.transform = 'translateY(-50%) scale(1)';
+        });
+        
+        // Счетчик фото
+        counterText = document.createElement('div');
+        counterText.style.cssText = `
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 10;
+        `;
+        counterText.textContent = `${currentIdx + 1} / ${imagesArray.length}`;
+        
+        // Функция обновления изображения
+        const updateImage = function(newIndex) {
+            if (newIndex < 0) newIndex = imagesArray.length - 1;
+            if (newIndex >= imagesArray.length) newIndex = 0;
+            currentIdx = newIndex;
+            image.src = imagesArray[currentIdx];
+            counterText.textContent = `${currentIdx + 1} / ${imagesArray.length}`;
+            // Обновляем кнопку скачивания
+            const currentImagePath = imagesArray[currentIdx];
+            const filename = currentImagePath.split('/').pop() || `image_${currentIdx + 1}.jpg`;
+            downloadBtn.onclick = function(e) {
+                e.stopPropagation();
+                downloadBedImage(currentImagePath, filename);
+            };
+        };
+        
+        prevBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            updateImage(currentIdx - 1);
+        });
+        
+        nextBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            updateImage(currentIdx + 1);
+        });
+        
+        // Навигация клавиатурой
+        const keyboardHandler = function(e) {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                updateImage(currentIdx - 1);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                updateImage(currentIdx + 1);
+            }
+        };
+        document.addEventListener('keydown', keyboardHandler);
+        
+        // Сохраняем обработчик для удаления при закрытии
+        imageModal._keyboardHandler = keyboardHandler;
+    }
+    
+    imageContainer.appendChild(image);
+    if (prevBtn) imageContainer.appendChild(prevBtn);
+    if (nextBtn) imageContainer.appendChild(nextBtn);
+    if (counterText) imageContainer.appendChild(counterText);
+    if (downloadBtn) imageContainer.appendChild(downloadBtn);
+    
+    imageModal.appendChild(imageContainer);
     imageModal.appendChild(closeBtn);
     document.body.appendChild(imageModal);
     
     // Закрытие по клику на фон или кнопку
     const closeModal = function() {
+        if (imageModal._keyboardHandler) {
+            document.removeEventListener('keydown', imageModal._keyboardHandler);
+        }
         if (imageModal.parentNode) {
             document.body.removeChild(imageModal);
         }
@@ -5103,6 +5310,9 @@ function openImageModal(imageSrc) {
     };
     document.addEventListener('keydown', escapeHandler);
 }
+
+window.openImageModal = openImageModal;
+window.openImageModalWithGallery = openImageModalWithGallery;
 
 // Старая функция openImageModal (удаляем, если есть)
 function openImageModal_OLD(imageSrc) {
@@ -5550,6 +5760,166 @@ function renderBedTypeSelection(container) {
     
     html += '</div>';
     html += '</div>';
+    
+    // Добавляем секцию с фото компонентов и видео сборки
+    const gryadkiData = getProductData('gryadki');
+    if (gryadkiData) {
+        html += '<div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #e1e8ed;">';
+        html += '<h3 style="font-size: 18px; font-weight: 600; color: #2c3e50; margin-bottom: 15px; text-align: center;">📸 Компоненты грядок</h3>';
+        
+        // Компоненты
+        if (gryadkiData.components) {
+            // Перемычка
+            if (gryadkiData.components.peremychka && gryadkiData.components.peremychka.photos.length > 0) {
+                html += `<div style="margin-bottom: 16px;">
+                    <h4 style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #2c3e50;">${gryadkiData.components.peremychka.name}</h4>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">`;
+                gryadkiData.components.peremychka.photos.forEach((photo, index) => {
+                    const filename = `Перемычка_${index + 1}.jpg`;
+                    html += `<div style="position: relative; display: inline-block;">
+                        <img src="${photo}" alt="${gryadkiData.components.peremychka.name}" 
+                            style="width: 110px; height: 110px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid #e1e8ed;"
+                            onclick="openImageModal('${photo}')"
+                            onmouseover="this.style.borderColor='#48bb78'"
+                            onmouseout="this.style.borderColor='#e1e8ed'">
+                        <button onclick="event.stopPropagation(); downloadBedImage('${photo}', '${filename}');" style="
+                            position: absolute;
+                            top: 4px;
+                            right: 4px;
+                            background: rgba(0, 0, 0, 0.3);
+                            border: none;
+                            border-radius: 4px;
+                            padding: 4px;
+                            cursor: pointer;
+                            font-size: 12px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            width: 24px;
+                            height: 24px;
+                            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                            transition: all 0.2s;
+                            color: white;
+                        " onmouseover="this.style.background='rgba(0, 0, 0, 0.5)'; this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.3)'; this.style.transform='scale(1)'">
+                            <span>📥</span>
+                        </button>
+                    </div>`;
+                });
+                html += '</div></div>';
+            }
+            
+            // Уголки
+            if (gryadkiData.components.ugolki && gryadkiData.components.ugolki.photos.length > 0) {
+                html += `<div style="margin-bottom: 16px;">
+                    <h4 style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #2c3e50;">${gryadkiData.components.ugolki.name}</h4>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">`;
+                gryadkiData.components.ugolki.photos.forEach((photo, index) => {
+                    const filename = `Соединительные_уголки_${index + 1}.jpg`;
+                    html += `<div style="position: relative; display: inline-block;">
+                        <img src="${photo}" alt="${gryadkiData.components.ugolki.name}" 
+                            style="width: 110px; height: 110px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid #e1e8ed;"
+                            onclick="openImageModal('${photo}')"
+                            onmouseover="this.style.borderColor='#48bb78'"
+                            onmouseout="this.style.borderColor='#e1e8ed'">
+                        <button onclick="event.stopPropagation(); downloadBedImage('${photo}', '${filename}');" style="
+                            position: absolute;
+                            top: 4px;
+                            right: 4px;
+                            background: rgba(0, 0, 0, 0.3);
+                            border: none;
+                            border-radius: 4px;
+                            padding: 4px;
+                            cursor: pointer;
+                            font-size: 12px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            width: 24px;
+                            height: 24px;
+                            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                            transition: all 0.2s;
+                            color: white;
+                        " onmouseover="this.style.background='rgba(0, 0, 0, 0.5)'; this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.3)'; this.style.transform='scale(1)'">
+                            <span>📥</span>
+                        </button>
+                    </div>`;
+                });
+                html += '</div></div>';
+            }
+            
+            // Стенка
+            if (gryadkiData.components.stenka && gryadkiData.components.stenka.photos.length > 0) {
+                html += `<div style="margin-bottom: 16px;">
+                    <h4 style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #2c3e50;">${gryadkiData.components.stenka.name}</h4>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">`;
+                gryadkiData.components.stenka.photos.forEach((photo, index) => {
+                    const filename = `Стенка_грядки_${index + 1}.jpg`;
+                    html += `<div style="position: relative; display: inline-block;">
+                        <img src="${photo}" alt="${gryadkiData.components.stenka.name}" 
+                            style="width: 110px; height: 110px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid #e1e8ed;"
+                            onclick="openImageModal('${photo}')"
+                            onmouseover="this.style.borderColor='#48bb78'"
+                            onmouseout="this.style.borderColor='#e1e8ed'">
+                        <button onclick="event.stopPropagation(); downloadBedImage('${photo}', '${filename}');" style="
+                            position: absolute;
+                            top: 4px;
+                            right: 4px;
+                            background: rgba(0, 0, 0, 0.3);
+                            border: none;
+                            border-radius: 4px;
+                            padding: 4px;
+                            cursor: pointer;
+                            font-size: 12px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            width: 24px;
+                            height: 24px;
+                            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                            transition: all 0.2s;
+                            color: white;
+                        " onmouseover="this.style.background='rgba(0, 0, 0, 0.5)'; this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.3)'; this.style.transform='scale(1)'">
+                            <span>📥</span>
+                        </button>
+                    </div>`;
+                });
+                html += '</div></div>';
+            }
+        }
+        
+        // Видео сборки
+        if (gryadkiData.video && gryadkiData.video.assembly) {
+            html += `<div style="text-align: center; margin-top: 15px; padding: 15px; background: #f7fafc; border-radius: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h4 style="font-size: 16px; font-weight: 600; color: #2c3e50; margin: 0;">🎥 ${gryadkiData.video.assembly.name}</h4>
+                    <button onclick="downloadVideo('${gryadkiData.video.assembly.path}', '${gryadkiData.video.assembly.name.replace(/\s+/g, '_')}.mp4');" style="
+                        background: rgba(0, 0, 0, 0.3);
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        padding: 4px 8px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 32px;
+                        height: 32px;
+                        transition: all 0.2s;
+                    " onmouseover="this.style.background='rgba(0, 0, 0, 0.5)'; this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.3)'; this.style.transform='scale(1)'">
+                        <span>📥</span>
+                    </button>
+                </div>
+                <video controls style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <source src="${gryadkiData.video.assembly.path}" type="video/mp4">
+                    Ваш браузер не поддерживает видео.
+                </video>
+            </div>`;
+        }
+        
+        html += '</div>';
+    }
+    
     container.innerHTML = html;
 }
 
@@ -6273,6 +6643,17 @@ function downloadBedImage(url, filename) {
     showSuccess('Фотография скачивается...', 'Скачивание');
 }
 
+function downloadVideo(url, filename) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showSuccess('Видео скачивается...', 'Скачивание');
+}
+
 window.applyBedsSelection = applyBedsSelection;
 window.selectBedType = selectBedType;
 window.backToBedTypeSelection = backToBedTypeSelection;
@@ -6280,6 +6661,259 @@ window.applyRecommendedBeds = applyRecommendedBeds;
 window.clearAllBeds = clearAllBeds;
 window.updateBedsClearButton = updateBedsClearButton;
 window.downloadBedImage = downloadBedImage;
+window.downloadVideo = downloadVideo;
+
+// Функция показа информации о товаре из раздела "Дополнительные товары"
+function showProductInfo(productId) {
+    let productData = null;
+    let productName = '';
+    let photos = [];
+    let description = '';
+    let video = null;
+    
+    // Маппинг ID товаров на данные
+    switch(productId) {
+        case 'drip-irrigation-mech':
+            const dripData = getProductData('drip-irrigation');
+            if (dripData && dripData.mechanical) {
+                productData = dripData.mechanical;
+                productName = dripData.mechanical.name || 'Капельный полив механический';
+                photos = dripData.mechanical.photos || [];
+                description = dripData.mechanical.description || dripData.description || '';
+            }
+            break;
+            
+        case 'drip-irrigation-auto':
+            const dripAutoData = getProductData('drip-irrigation');
+            if (dripAutoData && dripAutoData.automatic) {
+                productData = dripAutoData.automatic;
+                productName = dripAutoData.automatic.name || 'Капельный полив автоматический';
+                photos = dripAutoData.automatic.photos || [];
+                description = dripAutoData.automatic.description || dripAutoData.description || '';
+            }
+            break;
+            
+        case 'thermodrive':
+            const thermodriveData = getProductData('thermodrive');
+            if (thermodriveData) {
+                productData = thermodriveData;
+                productName = thermodriveData.name || 'Автомат для форточки';
+                photos = thermodriveData.photos || [];
+                description = thermodriveData.description || '';
+                // Добавляем предупреждение о том, что автомат устанавливается только на дополнительную форточку
+                description = '<div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 15px; margin-bottom: 15px; border-radius: 6px;"><strong style="color: #856404;">⚠️ Внимание:</strong> Автомат для форточки устанавливается только на <strong>дополнительную форточку</strong>. Убедитесь, что у вас есть дополнительная форточка (купленная или подаренная), прежде чем выбирать автомат.</div>' + description;
+            }
+            break;
+            
+        case 'doors-windows-window':
+            const doorsData = getProductData('doors-windows');
+            if (doorsData && doorsData.windows) {
+                productData = doorsData.windows;
+                productName = 'Дополнительная форточка';
+                photos = (doorsData.windows.side?.photos || []).concat(doorsData.windows.end?.photos || []);
+                description = doorsData.windows.side?.description || doorsData.windows.end?.description || doorsData.description || '';
+            }
+            break;
+            
+        case 'tapes-galvanized':
+            const tapesData = getProductData('tapes');
+            if (tapesData && tapesData.galvanized) {
+                productData = tapesData.galvanized;
+                productName = tapesData.galvanized.name || 'Оцинкованная лента 30 м';
+                photos = tapesData.galvanized.photos || [];
+                description = tapesData.galvanized.description || tapesData.description || '';
+            }
+            break;
+            
+        case 'tapes-vapor-permeable':
+            const tapesVaporData = getProductData('tapes');
+            if (tapesVaporData && tapesVaporData.vaporPermeable) {
+                productData = tapesVaporData.vaporPermeable;
+                productName = tapesVaporData.vaporPermeable.name || 'Паропропускная лента 25 м';
+                photos = tapesVaporData.vaporPermeable.photos || [];
+                description = tapesVaporData.vaporPermeable.description || tapesVaporData.description || '';
+                video = tapesVaporData.vaporPermeable.video || null;
+            }
+            break;
+    }
+    
+    if (!productData) {
+        showWarning("Информация о товаре пока недоступна", "Информация");
+        return;
+    }
+    
+    // Создаем модальное окно
+    const modal = document.createElement('div');
+    modal.className = 'product-info-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        box-sizing: border-box;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        border-radius: 12px;
+        max-width: 900px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 20px;
+        position: relative;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+        box-sizing: border-box;
+    `;
+    
+    let html = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #e1e8ed; padding-bottom: 12px;">
+            <h2 style="margin: 0; font-size: 20px; color: #2c3e50;">${productName}</h2>
+            <button onclick="this.closest('.product-info-modal').remove()" style="
+                background: #ef4444;
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 32px;
+                height: 32px;
+                font-size: 22px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background 0.2s;
+            " onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">×</button>
+        </div>
+    `;
+    
+    if (description) {
+        // Если описание содержит HTML (например, предупреждение), вставляем как есть, иначе как параграф
+        if (description.includes('<div') || description.includes('<strong')) {
+            html += description;
+        } else {
+            html += `<p style="font-size: 15px; color: #4a5568; margin-bottom: 15px; line-height: 1.5;">${description}</p>`;
+        }
+    }
+    
+    // Галерея фото
+    if (photos && photos.length > 0) {
+        // Сохраняем массив фото в глобальную переменную для доступа из onclick
+        const photosArrayId = `product_photos_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        window[photosArrayId] = photos;
+        
+        html += `<div style="margin-top: 20px;">
+            <h3 style="font-size: 18px; font-weight: 600; color: #2c3e50; margin-bottom: 12px;">📸 Фото</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">`;
+        
+        photos.forEach((photo, index) => {
+            const filename = `${productName.replace(/\s+/g, '_')}_${index + 1}.jpg`;
+            html += `
+                <div style="position: relative; cursor: pointer; border-radius: 8px; overflow: hidden; border: 2px solid #e1e8ed; transition: all 0.2s;" 
+                     onmouseover="this.style.borderColor='#48bb78'; this.style.transform='scale(1.02)'" 
+                     onmouseout="this.style.borderColor='#e1e8ed'; this.style.transform='scale(1)'"
+                     onclick="openImageModalWithGallery(window['${photosArrayId}'], ${index})">
+                    <img src="${photo}" alt="${productName} ${index + 1}" 
+                         style="width: 100%; height: 180px; object-fit: cover; display: block;">
+                    <button onclick="event.stopPropagation(); downloadBedImage('${photo}', '${filename}');" style="
+                        position: absolute;
+                        top: 6px;
+                        right: 6px;
+                        background: rgba(0, 0, 0, 0.3);
+                        border: none;
+                        border-radius: 4px;
+                        padding: 4px 6px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 28px;
+                        height: 28px;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                        transition: all 0.2s;
+                        color: white;
+                    " onmouseover="this.style.background='rgba(0, 0, 0, 0.5)'; this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.3)'; this.style.transform='scale(1)'">
+                        <span>📥</span>
+                    </button>
+                </div>
+            `;
+        });
+        
+        html += `</div></div>`;
+        
+        // Очищаем глобальную переменную при закрытии модального окна
+        const cleanupHandler = function(e) {
+            if (e.target === modal || e.target.closest('button[onclick*="closest"]')) {
+                setTimeout(() => {
+                    if (window[photosArrayId]) {
+                        delete window[photosArrayId];
+                    }
+                }, 1000);
+            }
+        };
+        modal.addEventListener('click', cleanupHandler);
+    }
+    
+    // Видео (если есть)
+    if (video) {
+        html += `<div style="text-align: center; margin-top: 20px; padding: 15px; background: #f7fafc; border-radius: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h4 style="font-size: 16px; font-weight: 600; color: #2c3e50; margin: 0;">🎥 Видео</h4>
+                <button onclick="downloadVideo('${video}', '${productName.replace(/\s+/g, '_')}.mp4');" style="
+                    background: rgba(0, 0, 0, 0.3);
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    padding: 4px 8px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 32px;
+                    height: 32px;
+                    transition: all 0.2s;
+                " onmouseover="this.style.background='rgba(0, 0, 0, 0.5)'; this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.3)'; this.style.transform='scale(1)'">
+                    <span>📥</span>
+                </button>
+            </div>
+            <video controls style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <source src="${video}" type="video/mp4">
+                Ваш браузер не поддерживает видео.
+            </video>
+        </div>`;
+    }
+    
+    modalContent.innerHTML = html;
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Закрытие по клику на фон
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    // Закрытие по Escape
+    const escapeHandler = function(e) {
+        if (e.key === 'Escape') {
+            modal.remove();
+            document.removeEventListener('keydown', escapeHandler);
+        }
+    };
+    document.addEventListener('keydown', escapeHandler);
+}
+
+window.showProductInfo = showProductInfo;
 
 // ==================== ФУНКЦИИ ДЛЯ ПОДАРКОВ ====================
 
@@ -7377,9 +8011,215 @@ function handleAssemblyChange() {
     calculateGreenhouseCost();
 }
 
+// Функция показа информации о поликарбонате
+function showPolycarbonateInfo() {
+    const polycarbonateSelect = document.getElementById("polycarbonate");
+    if (!polycarbonateSelect || !polycarbonateSelect.value) {
+        showWarning("Сначала выберите тип поликарбоната", "Информация о поликарбонате");
+        return;
+    }
+    
+    const polycarbonateValue = polycarbonateSelect.value.trim();
+    const polyData = getProductData('polycarbonate');
+    
+    if (!polyData || !polyData.types) {
+        showWarning("Информация о поликарбонате пока недоступна", "Информация");
+        return;
+    }
+    
+    // Определяем тип поликарбоната
+    let selectedType = null;
+    const polyNormalized = polycarbonateValue.replace(/\s+/g, "").toLowerCase();
+    
+    if (polyNormalized.includes("стандарт") && polyNormalized.includes("4")) {
+        selectedType = polyData.types.standard_4mm;
+    } else if (polyNormalized.includes("люкс") && polyNormalized.includes("4")) {
+        selectedType = polyData.types.lux_4mm;
+    } else if (polyNormalized.includes("премиум") && polyNormalized.includes("6")) {
+        selectedType = polyData.types.premium_6mm;
+    }
+    
+    if (!selectedType || !selectedType.photos || selectedType.photos.length === 0) {
+        showWarning("Фото для выбранного типа поликарбоната пока недоступны", "Информация");
+        return;
+    }
+    
+    // Создаем модальное окно
+    const modal = document.createElement('div');
+    modal.className = 'polycarbonate-info-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        box-sizing: border-box;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        border-radius: 12px;
+        max-width: 900px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 20px;
+        position: relative;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+        box-sizing: border-box;
+    `;
+    
+    let html = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #e1e8ed; padding-bottom: 12px;">
+            <h2 style="margin: 0; font-size: 20px; color: #2c3e50;">🏠 ${selectedType.name}</h2>
+            <button onclick="this.closest('.polycarbonate-info-modal').remove()" style="
+                background: #ef4444;
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 32px;
+                height: 32px;
+                font-size: 22px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: background 0.2s;
+            " onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">×</button>
+        </div>
+    `;
+    
+    if (selectedType.description) {
+        html += `<p style="font-size: 15px; color: #4a5568; margin-bottom: 12px; line-height: 1.5;">${selectedType.description}</p>`;
+    }
+    
+    if (selectedType.weight) {
+        html += `<p style="font-size: 14px; color: #718096; margin-bottom: 15px;"><strong>Вес:</strong> ${selectedType.weight}</p>`;
+    }
+    
+    // Галерея фото
+    html += `<div style="margin-top: 20px;">
+        <h3 style="font-size: 18px; font-weight: 600; color: #2c3e50; margin-bottom: 12px;">📸 Фото</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">`;
+    
+    // Сохраняем массив фото в глобальную переменную для доступа из onclick
+    const photosArrayId = `poly_photos_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    window[photosArrayId] = selectedType.photos;
+    
+    selectedType.photos.forEach((photo, index) => {
+        const filename = `${selectedType.name.replace(/\s+/g, '_')}_${index + 1}.jpg`;
+        html += `
+            <div style="position: relative; cursor: pointer; border-radius: 8px; overflow: hidden; border: 2px solid #e1e8ed; transition: all 0.2s;" 
+                 onmouseover="this.style.borderColor='#48bb78'; this.style.transform='scale(1.02)'" 
+                 onmouseout="this.style.borderColor='#e1e8ed'; this.style.transform='scale(1)'"
+                 onclick="openImageModalWithGallery(window['${photosArrayId}'], ${index})">
+                <img src="${photo}" alt="${selectedType.name} ${index + 1}" 
+                     style="width: 100%; height: 180px; object-fit: cover; display: block;">
+                <button onclick="event.stopPropagation(); downloadBedImage('${photo}', '${filename}');" style="
+                    position: absolute;
+                    top: 6px;
+                    right: 6px;
+                    background: rgba(0, 0, 0, 0.3);
+                    border: none;
+                    border-radius: 4px;
+                    padding: 4px 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 28px;
+                    height: 28px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                    transition: all 0.2s;
+                    color: white;
+                " onmouseover="this.style.background='rgba(0, 0, 0, 0.5)'; this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.3)'; this.style.transform='scale(1)'">
+                    <span>📥</span>
+                </button>
+            </div>
+        `;
+    });
+    
+    // Очищаем глобальную переменную при закрытии модального окна
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal || e.target.closest('button[onclick*="closest"]')) {
+            setTimeout(() => {
+                if (window[photosArrayId]) {
+                    delete window[photosArrayId];
+                }
+            }, 1000);
+        }
+    });
+    
+    html += `</div></div>`;
+    
+    // Параметры (если есть)
+    if (polyData.parametersImage) {
+        html += `<div style="margin-top: 20px; text-align: center;">
+            <h3 style="font-size: 18px; font-weight: 600; color: #2c3e50; margin-bottom: 12px;">📐 Параметры</h3>
+            <div style="position: relative; display: inline-block;">
+                <img src="${polyData.parametersImage}" alt="Параметры поликарбоната" 
+                     style="max-width: 100%; border-radius: 8px; cursor: pointer; border: 2px solid #e1e8ed;"
+                     onclick="openImageModal('${polyData.parametersImage}')"
+                     onmouseover="this.style.borderColor='#48bb78'"
+                     onmouseout="this.style.borderColor='#e1e8ed'">
+                <button onclick="event.stopPropagation(); downloadBedImage('${polyData.parametersImage}', 'Параметры_поликарбоната.png');" style="
+                    position: absolute;
+                    top: 6px;
+                    right: 6px;
+                    background: rgba(0, 0, 0, 0.3);
+                    border: none;
+                    border-radius: 4px;
+                    padding: 4px 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 28px;
+                    height: 28px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                    transition: all 0.2s;
+                    color: white;
+                " onmouseover="this.style.background='rgba(0, 0, 0, 0.5)'; this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0, 0, 0, 0.3)'; this.style.transform='scale(1)'">
+                    <span>📥</span>
+                </button>
+            </div>
+        </div>`;
+    }
+    
+    modalContent.innerHTML = html;
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Закрытие по клику на фон
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    // Закрытие по Escape
+    const escapeHandler = function(e) {
+        if (e.key === 'Escape') {
+            modal.remove();
+            document.removeEventListener('keydown', escapeHandler);
+        }
+    };
+    document.addEventListener('keydown', escapeHandler);
+}
+
 window.handlePolycarbonateChange = handlePolycarbonateChange;
 window.handleAssemblyChange = handleAssemblyChange;
 window.handleAssemblyLabelClick = handleAssemblyLabelClick;
+window.showPolycarbonateInfo = showPolycarbonateInfo;
 
 // Вызываем проверку при загрузке страницы, если поликарбонат уже выбран
 if (document.readyState === 'loading') {
