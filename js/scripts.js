@@ -1,7 +1,7 @@
 
 // Константа для контроля отладки
 const DEBUG = false; // Отключено для продакшена
-const APP_VERSION = "v190"; // v190: Исправлена очистка restrictions в боте - теперь правильно обновляются в базе // v189: Улучшена обработка пустых restrictions (правильная очистка старых ограничений)
+const APP_VERSION = "v191"; // v191: Улучшена функция склонения населенных пунктов - теперь правильно склоняются посёлки, сёла и другие типы населенных пунктов // v190: Исправлена очистка restrictions в боте - теперь правильно обновляются в базе
 
 // ==================== СИСТЕМА УВЕДОМЛЕНИЙ (TOAST) ====================
 
@@ -2749,7 +2749,63 @@ async function generateShortOffer(finalTotalPrice1, selectedEntry) {
         }
     }
     
-    // Функция склонения названия города в родительный падеж (для "доставка до...")
+    // Функция склонения типа населенного пункта в родительный падеж
+    function declineSettlementType(type) {
+        if (!type) return type;
+        
+        const lowerType = type.toLowerCase().trim();
+        
+        // Словарь склонений типов населенных пунктов
+        const typeDeclensions = {
+            'посёлок': 'посёлка',
+            'поселок': 'посёлка',
+            'пгт': 'пгт',
+            'посёлок городского типа': 'посёлка городского типа',
+            'поселок городского типа': 'посёлка городского типа',
+            'село': 'села',
+            'деревня': 'деревни',
+            'город': 'города',
+            'городок': 'городка',
+            'станица': 'станицы',
+            'хутор': 'хутора',
+            'аул': 'аула',
+            'кишлак': 'кишлака',
+            'снт': 'СНТ',
+            'днт': 'ДНТ',
+            'тсн': 'ТСН',
+            'садоводство': 'садоводства',
+            'дачный посёлок': 'дачного посёлка',
+            'дачный поселок': 'дачного посёлка',
+            'рабочий посёлок': 'рабочего посёлка',
+            'рабочий поселок': 'рабочего посёлка',
+            'курортный посёлок': 'курортного посёлка',
+            'курортный поселок': 'курортного посёлка'
+        };
+        
+        // Проверяем точное совпадение
+        if (typeDeclensions[lowerType]) {
+            // Сохраняем регистр первой буквы
+            const firstChar = type[0];
+            const declined = typeDeclensions[lowerType];
+            return firstChar === firstChar.toUpperCase() 
+                ? declined.charAt(0).toUpperCase() + declined.slice(1)
+                : declined;
+        }
+        
+        // Проверяем составные типы (например, "посёлок городского типа")
+        for (const [key, value] of Object.entries(typeDeclensions)) {
+            if (lowerType.includes(key) && key.length > 5) { // Для составных типов
+                // Заменяем только тип, сохраняя остальное
+                const regex = new RegExp(key, 'i');
+                return type.replace(regex, value);
+            }
+        }
+        
+        // Если не найдено, возвращаем как есть
+        return type;
+    }
+    
+    // Функция склонения названия населенного пункта (без типа) в родительный падеж
     function declineCityName(cityName) {
         if (!cityName) return cityName;
         
@@ -2834,7 +2890,10 @@ async function generateShortOffer(finalTotalPrice1, selectedEntry) {
             'ставрополь': 'Ставрополя',
             'майкоп': 'Майкопа',
             'черкесск': 'Черкесска',
-            'великий новгород': 'Великого Новгорода'
+            'великий новгород': 'Великого Новгорода',
+            'вольгинский': 'Вольгинского',
+            'мрясово': 'Мрясово',
+            'малино': 'Малино'
         };
         
         // Проверяем специальные случаи
@@ -2843,8 +2902,9 @@ async function generateShortOffer(finalTotalPrice1, selectedEntry) {
         }
         
         // Общие правила склонения
-        // Если заканчивается на -а (кроме -ка, -га, -ха), меняем на -ы
-        if (city.endsWith('а') && !city.endsWith('ка') && !city.endsWith('га') && !city.endsWith('ха')) {
+        // Если заканчивается на -а (кроме -ка, -га, -ха, -ино, -ово, -ево), меняем на -ы
+        if (city.endsWith('а') && !city.endsWith('ка') && !city.endsWith('га') && !city.endsWith('ха') && 
+            !city.endsWith('ино') && !city.endsWith('ово') && !city.endsWith('ево')) {
             return city.slice(0, -1) + 'ы';
         }
         // Если заканчивается на -я, меняем на -и
@@ -2871,9 +2931,93 @@ async function generateShortOffer(finalTotalPrice1, selectedEntry) {
         if (city.endsWith('бург')) {
             return city + 'а';
         }
+        // Если заканчивается на -ский, -цкий, меняем на -ского, -цкого
+        if (city.endsWith('ский')) {
+            return city.slice(0, -4) + 'ого';
+        }
+        if (city.endsWith('цкий')) {
+            return city.slice(0, -4) + 'ого';
+        }
+        // Если заканчивается на -ино, -ово, -ево - обычно не склоняется, но может склоняться
+        // Для большинства случаев оставляем как есть, но для некоторых склоняем
+        if (city.endsWith('ино') || city.endsWith('ово') || city.endsWith('ево')) {
+            // Большинство таких названий не склоняется, но есть исключения
+            // Для простоты оставляем как есть
+            return city;
+        }
         
         // Если не подошло ни одно правило, возвращаем как есть
         return city;
+    }
+    
+    // Улучшенная функция склонения населенного пункта с учетом типа
+    function declineSettlementName(settlementName) {
+        if (!settlementName) return settlementName;
+        
+        const name = settlementName.trim();
+        const lowerName = name.toLowerCase();
+        
+        // Типы населенных пунктов для поиска
+        const settlementTypes = [
+            'посёлок городского типа',
+            'поселок городского типа',
+            'дачный посёлок',
+            'дачный поселок',
+            'рабочий посёлок',
+            'рабочий поселок',
+            'курортный посёлок',
+            'курортный поселок',
+            'посёлок',
+            'поселок',
+            'пгт',
+            'село',
+            'деревня',
+            'город',
+            'городок',
+            'станица',
+            'хутор',
+            'аул',
+            'кишлак',
+            'снт',
+            'днт',
+            'тсн',
+            'садоводство'
+        ];
+        
+        // Ищем тип населенного пункта
+        let foundType = null;
+        let typeIndex = -1;
+        let typeLength = 0;
+        
+        // Сначала ищем составные типы (длинные)
+        for (const type of settlementTypes) {
+            const index = lowerName.indexOf(type);
+            if (index === 0 || (index > 0 && lowerName[index - 1] === ' ')) {
+                if (type.length > typeLength) {
+                    foundType = name.substring(index, index + type.length);
+                    typeIndex = index;
+                    typeLength = type.length;
+                }
+            }
+        }
+        
+        // Если нашли тип
+        if (foundType) {
+            const declinedType = declineSettlementType(foundType);
+            const namePart = name.substring(typeIndex + typeLength).trim();
+            
+            // Если есть название после типа
+            if (namePart) {
+                const declinedName = declineCityName(namePart);
+                return `${declinedType} ${declinedName}`;
+            } else {
+                // Если только тип без названия
+                return declinedType;
+            }
+        }
+        
+        // Если тип не найден, склоняем как обычное название города
+        return declineCityName(name);
     }
     
     // Получаем значение поликарбоната
@@ -2897,8 +3041,8 @@ async function generateShortOffer(finalTotalPrice1, selectedEntry) {
         const lastPart = addressParts[addressParts.length - 1];
         
         if (lastPart) {
-            // Склоняем название города в родительный падеж
-            const declinedCity = declineCityName(lastPart);
+            // Склоняем название населенного пункта в родительный падеж (с учетом типа)
+            const declinedCity = declineSettlementName(lastPart);
             title += ` с доставкой до ${declinedCity}`;
         }
     }
