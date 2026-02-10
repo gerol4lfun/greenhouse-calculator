@@ -142,7 +142,7 @@ function generateInstructionsFile() {
  * Данные об инструкциях по сборке теплиц
  * Автоматически сгенерировано скриптом scripts/scan_instructions.js
  * 
- * Версия: v204
+ * Версия: v205
  * Дата: ${new Date().toISOString().split('T')[0]}
  * 
  * Структура:
