@@ -11,6 +11,7 @@ const { parseDeliveryDates, formatParsedResults } = require('./parser');
 const { initSupabase, updateDeliveryDates } = require('./supabase');
 
 // Версионирование для отладки
+// Проект калькулятора: v205
 const APP_VERSION = process.env.APP_VERSION || "v186-bot";
 const BUILD_SHA =
     process.env.RAILWAY_GIT_COMMIT_SHA ||
