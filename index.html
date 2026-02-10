@@ -20,7 +20,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.28.0/dist/umd/supabase.min.js"></script>
   
   <!-- cache-bust: Safari иногда держит старые стили, поэтому версия должна меняться при правках -->
-    <link rel="stylesheet" href="css/styles.css?v=204">
+    <link rel="stylesheet" href="css/styles.css?v=205">
 </head>
   <body>
     <!-- Контейнер для уведомлений -->
@@ -528,25 +528,45 @@
         <!-- Панель для короткого КП -->
         <div class="kp-panel" id="kp-panel-short">
           <textarea id="commercial-offer-short" rows="20" readonly>Здесь будет ваше короткое КП.</textarea>
+          <div class="char-counter-container">
+            <span class="char-counter" id="char-counter-short">Символов: 0 / 800 (для Авито)</span>
+          </div>
+          <div class="avito-warning" id="avito-warning-short" style="display: none;">
+            <div class="avito-warning-content">
+              <strong>⚠️ Это длинное КП не отправится в Авито!</strong>
+              <p>Лимит Авито: 800 символов на сообщение. Если превысить лимит, сообщение не отправится и клиент его не увидит. Используйте кнопки "Скопировать КП 1" и "Скопировать КП 2" ниже.</p>
+            </div>
+          </div>
         </div>
         
         <!-- Панель для длинного КП (скрыта по умолчанию) -->
         <div class="kp-panel hidden" id="kp-panel-long">
           <textarea id="commercial-offer" rows="20" readonly>Здесь будет ваше коммерческое предложение.</textarea>
+          <div class="char-counter-container">
+            <span class="char-counter" id="char-counter-long">Символов: 0 / 800 (для Авито)</span>
+          </div>
+          <div class="avito-warning" id="avito-warning-long" style="display: none;">
+            <div class="avito-warning-content">
+              <strong>⚠️ Это длинное КП не отправится в Авито!</strong>
+              <p>Лимит Авито: 800 символов на сообщение. Если превысить лимит, сообщение не отправится и клиент его не увидит. Используйте кнопки "Скопировать КП 1" и "Скопировать КП 2" ниже.</p>
+            </div>
+          </div>
         </div>
         
         <div class="btn-group">
-          <button class="blue-button" onclick="copyCommercialOffer()">Скопировать КП</button>
+          <button class="blue-button" id="copy-full-kp-btn" onclick="copyCommercialOffer()">Скопировать КП</button>
+          <button class="blue-button" id="copy-kp1-btn" onclick="copyKP1()" style="display: none;">Скопировать КП 1</button>
+          <button class="blue-button" id="copy-kp2-btn" onclick="copyKP2()" style="display: none;">Скопировать КП 2</button>
         </div>
       </div>
     </div>
 
     <!-- cache-bust: версия скрипта должна быть синхронизирована с APP_VERSION в scripts.js -->
-    <script src="js/products-data.js?v=204"></script>
-    <script src="js/greenhouses-data.js?v=204"></script>
-    <script src="js/greenhouses-photos-list.js?v=204"></script>
-    <script src="js/instructions-data.js?v=204"></script>
-    <script src="js/scripts.js?v=204"></script>
+    <script src="js/products-data.js?v=205"></script>
+    <script src="js/greenhouses-data.js?v=205"></script>
+    <script src="js/greenhouses-photos-list.js?v=205"></script>
+    <script src="js/instructions-data.js?v=205"></script>
+    <script src="js/scripts.js?v=205"></script>
   </div>
 </body>
 </html>

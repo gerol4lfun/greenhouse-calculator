@@ -1166,7 +1166,8 @@ select option {
 /* --- Группы кнопок --- */
 .btn-group {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 15px;
 }
@@ -1175,7 +1176,8 @@ select option {
   margin: 0;
   padding: 12px 20px;
   font-size: 16px;
-  width: 100%;
+  flex: 1;
+  min-width: 200px;
   font-weight: 500;
 }
 
@@ -1522,7 +1524,7 @@ select option {
 
 .kp-panel textarea {
   border: none;
-  border-radius: 0 0 8px 8px;
+  border-radius: 0;
   padding: 16px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
@@ -1531,6 +1533,76 @@ select option {
 
 .kp-panel.hidden {
   display: none !important;
+}
+
+/* Счетчик символов для КП */
+.char-counter-container {
+  padding: 8px 16px;
+  background: #f8f9fa;
+  border-top: 1px solid #e1e8ed;
+  border-radius: 0 0 8px 8px;
+  text-align: right;
+}
+
+.char-counter {
+  font-size: 13px;
+  color: #6c757d;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.char-counter.over-limit {
+  color: #fff;
+  background-color: #dc3545;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  animation: pulse-warning 2s ease-in-out infinite;
+}
+
+.char-counter.over-limit::before {
+  content: "⚠️ ";
+}
+
+@keyframes pulse-warning {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
+}
+
+/* Визуальное предупреждение о лимите Авито */
+.avito-warning {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+  border-left: 4px solid #ffc107;
+  border-radius: 0 0 8px 8px;
+  margin-top: -1px;
+}
+
+.avito-warning-content {
+  color: #856404;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.avito-warning-content strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #b45309;
+}
+
+.avito-warning-content p {
+  margin: 0;
+  color: #856404;
 }
 
 /* --- Модальное окно с датами доставки --- */

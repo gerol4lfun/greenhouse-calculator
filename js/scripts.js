@@ -1,7 +1,7 @@
 
 // Константа для контроля отладки
 const DEBUG = false; // Отключено для продакшена
-const APP_VERSION = "v204"; // v204: Интеграция галереи фотографий теплиц и инструкций по сборке - добавлена внутренняя галерея фотографий теплиц с навигацией по типам/вариантам, добавлен раздел инструкций по сборке с поиском и фильтрацией, улучшен дизайн модальных окон, оптимизирована мобильная верстка, исправлены проблемы с копированием изображений в буфер обмена на macOS, обновлен favicon - добавлена профессиональная иконка калькулятора // v203: Добавлен favicon.ico для устранения ошибки 404, настроено кеширование статических ресурсов (изображения, видео, CSS, JS) через meta-теги и .htaccess, добавлено предупреждение в раздел "Автомат для форточки" о том, что он устанавливается только на дополнительную форточку, сделаны кнопки "скачать" менее заметными (только иконка, меньший размер, приглушенный цвет), добавлена полная надпись "Скачать" в полноэкранном режиме просмотра фото, добавлены мобильные стили для product-info-modal и polycarbonate-info-modal, улучшена адаптивность всех элементов // v202: Сделана вся область названия товара кликабельной (не только иконка), кнопка информации для поликарбоната переделана в стиле product-info-link (прозрачный фон, синий цвет, интегрирована в label), улучшена интерактивность с hover-эффектами
+const APP_VERSION = "v205"; // v205: Улучшения подарков и КП - объединение подарков с правильным склонением (2 форточки вместо "форточка (2 шт)"), полный ВАРИАНТ 2 с подарками и условиями оплаты, две кнопки для копирования КП 1 и КП 2, замена "Предложение действительно до..." на "Ближайшая дата доставки", улучшенные предупреждения о лимите Авито с объяснением что сообщение не отправится // v204: Интеграция галереи фотографий теплиц и инструкций по сборке - добавлена внутренняя галерея фотографий теплиц с навигацией по типам/вариантам, добавлен раздел инструкций по сборке с поиском и фильтрацией, улучшен дизайн модальных окон, оптимизирована мобильная верстка, исправлены проблемы с копированием изображений в буфер обмена на macOS, обновлен favicon - добавлена профессиональная иконка калькулятора // v203: Добавлен favicon.ico для устранения ошибки 404, настроено кеширование статических ресурсов (изображения, видео, CSS, JS) через meta-теги и .htaccess, добавлено предупреждение в раздел "Автомат для форточки" о том, что он устанавливается только на дополнительную форточку, сделаны кнопки "скачать" менее заметными (только иконка, меньший размер, приглушенный цвет), добавлена полная надпись "Скачать" в полноэкранном режиме просмотра фото, добавлены мобильные стили для product-info-modal и polycarbonate-info-modal, улучшена адаптивность всех элементов // v202: Сделана вся область названия товара кликабельной (не только иконка), кнопка информации для поликарбоната переделана в стиле product-info-link (прозрачный фон, синий цвет, интегрирована в label), улучшена интерактивность с hover-эффектами
 
 // ==================== СИСТЕМА УВЕДОМЛЕНИЙ (TOAST) ====================
 
@@ -2093,16 +2093,19 @@ async function generateCommercialOffer(basePrice, assemblyCost, foundationCost, 
             commercialOffer += `📅 Доставка: с ${currentDeliveryDate}.${currentYear}\n`;
         }
     }
-    // Формируем дату: текущая дата + 7 дней
-    const currentDate = new Date();
-    const expirationDate = new Date(currentDate);
-    expirationDate.setDate(currentDate.getDate() + 7);
-    
-    // Форматируем дату в формат ДД.ММ.ГГГГ
-    const day = expirationDate.getDate().toString().padStart(2, '0');
-    const month = (expirationDate.getMonth() + 1).toString().padStart(2, '0');
-    const year = expirationDate.getFullYear();
-    const formattedDate = `${day}.${month}.${year}`;
+    // Формируем текст с датой доставки
+    let deliveryDateText = '';
+    if (currentDeliveryDate) {
+        const currentYear = new Date().getFullYear();
+        deliveryDateText = `📅 Ближайшая дата доставки: ${currentDeliveryDate}.${currentYear}`;
+        if (currentDeliveryRestrictions && currentDeliveryRestrictions.trim()) {
+            const restrictions = currentDeliveryRestrictions.split(',').map(r => r.trim()).filter(r => r);
+            if (restrictions.length > 0) {
+                deliveryDateText += `, кроме ${restrictions.join(', ')}`;
+            }
+        }
+        deliveryDateText += '.';
+    }
     
     // Подарки НЕ добавляются здесь - они добавляются через updateCommercialOffersWithGifts()
     // Это предотвращает дублирование подарков в КП
@@ -2111,14 +2114,18 @@ async function generateCommercialOffer(basePrice, assemblyCost, foundationCost, 
     if (finalTotalPrice > 35000) {
         commercialOffer += `\nИтого: ${formatPrice(finalTotalPrice)} рублей\n`;
         commercialOffer += `💳 Без предоплаты — оплата по факту.\n` +
-            `🌱 Бесплатное хранение до весны с сохранением цены.\n` +
-            `⏳ Предложение действительно до ${formattedDate}.`;
+            `🌱 Бесплатное хранение до весны с сохранением цены.\n`;
+        if (deliveryDateText) {
+            commercialOffer += `${deliveryDateText}\n`;
+        }
     } else {
         // Если сумма 35000 и меньше - стандартный формат
         commercialOffer += `\nИтоговая стоимость - ${formatPrice(finalTotalPrice)} рублей\n`;
         commercialOffer += `💳 Без предоплаты — оплата по факту\n` +
-            `🌱 Бесплатное хранение до весны с сохранением цены.\n\n` +
-            `⏳ Предложение действительно до ${formattedDate}`;
+            `🌱 Бесплатное хранение до весны с сохранением цены.\n`;
+        if (deliveryDateText) {
+            commercialOffer += `${deliveryDateText}\n`;
+        }
     }
 
     // ========== ВАРИАНТ 2: С запасом по нагрузке ==========
@@ -2151,6 +2158,9 @@ async function generateCommercialOffer(basePrice, assemblyCost, foundationCost, 
 
     // Выводим сформированное КП в textarea
     document.getElementById("commercial-offer").value = commercialOffer;
+    
+    // Обновляем счетчик символов и кнопки
+    updateCharCounter('commercial-offer');
 }
 
 // Функция генерации полного описания второго варианта для длинного КП
@@ -2430,7 +2440,44 @@ async function generateVariant2Description(altFrame, altArcStep, altPolycarbonat
             variant2Text += `\nДоставка - ${formatPrice(deliveryPriceValue)} рублей\n`;
         }
         
-        variant2Text += `\nИтого: ${formatPrice(finalTotalPrice2)} рублей`;
+        // Формируем текст с датой доставки
+        let deliveryDateText = '';
+        if (currentDeliveryDate) {
+            const currentYear = new Date().getFullYear();
+            deliveryDateText = `📅 Ближайшая дата доставки: ${currentDeliveryDate}.${currentYear}`;
+            if (currentDeliveryRestrictions && currentDeliveryRestrictions.trim()) {
+                const restrictions = currentDeliveryRestrictions.split(',').map(r => r.trim()).filter(r => r);
+                if (restrictions.length > 0) {
+                    deliveryDateText += `, кроме ${restrictions.join(', ')}`;
+                }
+            }
+            deliveryDateText += '.';
+        }
+        
+        // Добавляем итоговую сумму
+        if (finalTotalPrice2 > 35000) {
+            variant2Text += `\nИтого: ${formatPrice(finalTotalPrice2)} рублей\n`;
+        } else {
+            variant2Text += `\nИтоговая стоимость - ${formatPrice(finalTotalPrice2)} рублей\n`;
+        }
+        
+        // Подарки НЕ добавляются здесь - они добавляются через rebuildLongOfferWithGifts()
+        // Это предотвращает дублирование подарков в КП
+        
+        // Добавляем условия оплаты (те же, что в основном КП)
+        if (finalTotalPrice2 > 35000) {
+            variant2Text += `💳 Без предоплаты — оплата по факту.\n` +
+                `🌱 Бесплатное хранение до весны с сохранением цены.\n`;
+            if (deliveryDateText) {
+                variant2Text += `${deliveryDateText}\n`;
+            }
+        } else {
+            variant2Text += `💳 Без предоплаты — оплата по факту\n` +
+                `🌱 Бесплатное хранение до весны с сохранением цены.\n`;
+            if (deliveryDateText) {
+                variant2Text += `${deliveryDateText}\n`;
+            }
+        }
         
         return variant2Text;
     } catch (err) {
@@ -3152,6 +3199,8 @@ async function generateShortOffer(finalTotalPrice1, selectedEntry) {
     const shortOfferTextarea = document.getElementById("commercial-offer-short");
     if (shortOfferTextarea) {
         shortOfferTextarea.value = shortOffer;
+        // Обновляем счетчик символов
+        updateCharCounter('commercial-offer-short');
     }
 }
 
@@ -3210,9 +3259,358 @@ function setOfferTab(tab) {
             longPanel.style.display = 'block';
         }
     }
+    
+    // Обновляем счетчик символов для активной вкладки
+    const activeTextareaId = tab === 'short' ? 'commercial-offer-short' : 'commercial-offer';
+    updateCharCounter(activeTextareaId);
+    
+    // Обновляем видимость кнопок КП 1 и КП 2
+    if (tab === 'long') {
+        const offerText = document.getElementById('commercial-offer');
+        if (offerText) {
+            updateCharCounter('commercial-offer');
+        }
+    } else {
+        // Для короткого КП показываем основную кнопку, скрываем КП 1 и КП 2
+        const copyKP1Btn = document.getElementById('copy-kp1-btn');
+        const copyKP2Btn = document.getElementById('copy-kp2-btn');
+        const copyFullKPBtn = document.getElementById('copy-full-kp-btn');
+        if (copyKP1Btn) copyKP1Btn.style.display = 'none';
+        if (copyKP2Btn) copyKP2Btn.style.display = 'none';
+        if (copyFullKPBtn) copyFullKPBtn.style.display = '';
+    }
 }
 
 // Функция копирования КП (копирует активную вкладку)
+/**
+ * Обновляет счетчик символов для указанного textarea
+ */
+function updateCharCounter(textareaId) {
+    const textarea = document.getElementById(textareaId);
+    const counterId = textareaId === 'commercial-offer-short' ? 'char-counter-short' : 'char-counter-long';
+    const counter = document.getElementById(counterId);
+    
+    if (!textarea || !counter) {
+        return;
+    }
+    
+    const text = textarea.value;
+    const charCount = text.length;
+    const AVITO_LIMIT = 800;
+    
+    // Обновляем текст счетчика
+    counter.textContent = `Символов: ${charCount} / ${AVITO_LIMIT} (для Авито)`;
+    
+    // Добавляем/убираем класс для красной подсветки
+    if (charCount > AVITO_LIMIT) {
+        counter.classList.add('over-limit');
+    } else {
+        counter.classList.remove('over-limit');
+    }
+    
+    // Показываем/скрываем визуальное предупреждение
+    const warningId = textareaId === 'commercial-offer-short' ? 'avito-warning-short' : 'avito-warning-long';
+    const warning = document.getElementById(warningId);
+    if (warning) {
+        if (charCount > AVITO_LIMIT) {
+            warning.style.display = 'block';
+            // Обновляем текст предупреждения с количеством частей
+            const partsCount = Math.ceil(charCount / AVITO_LIMIT);
+            const warningText = warning.querySelector('p');
+            if (warningText) {
+                // Проверяем, есть ли ВАРИАНТ 2
+                const hasVariant2 = text.includes('==================================================') && 
+                                   text.includes('ВАРИАНТ 2:');
+                if (hasVariant2) {
+                    warningText.textContent = `Лимит Авито: ${AVITO_LIMIT} символов. Если превысить лимит, сообщение не отправится и клиент его не увидит. Ваш текст (${charCount} символов) нужно разделить на ${partsCount} ${partsCount === 2 ? 'части' : partsCount === 3 ? 'части' : 'частей'}. Используйте кнопки "Скопировать КП 1" и "Скопировать КП 2" ниже.`;
+                } else {
+                    warningText.textContent = `Лимит Авито: ${AVITO_LIMIT} символов. Если превысить лимит, сообщение не отправится и клиент его не увидит. Ваш текст (${charCount} символов) нужно разделить на ${partsCount} ${partsCount === 2 ? 'части' : partsCount === 3 ? 'части' : 'частей'}.`;
+                }
+            }
+        } else {
+            warning.style.display = 'none';
+        }
+    }
+    
+    // Показываем/скрываем кнопки "Скопировать КП 1" и "Скопировать КП 2" только для длинного КП с ВАРИАНТОМ 2
+    const copyKP1Btn = document.getElementById('copy-kp1-btn');
+    const copyKP2Btn = document.getElementById('copy-kp2-btn');
+    const copyFullKPBtn = document.getElementById('copy-full-kp-btn');
+    
+    if (textareaId === 'commercial-offer' && activeOfferTab === 'long') {
+        // Проверяем, есть ли ВАРИАНТ 2 в тексте
+        const hasVariant2 = text.includes('==================================================') && 
+                           text.includes('ВАРИАНТ 2:');
+        
+        if (hasVariant2) {
+            // Показываем кнопки КП 1 и КП 2, скрываем основную кнопку
+            if (copyKP1Btn) copyKP1Btn.style.display = '';
+            if (copyKP2Btn) copyKP2Btn.style.display = '';
+            if (copyFullKPBtn) copyFullKPBtn.style.display = 'none';
+        } else {
+            // Если ВАРИАНТ 2 нет, показываем основную кнопку, скрываем КП 1 и КП 2
+            if (copyKP1Btn) copyKP1Btn.style.display = 'none';
+            if (copyKP2Btn) copyKP2Btn.style.display = 'none';
+            if (copyFullKPBtn) copyFullKPBtn.style.display = '';
+        }
+    } else {
+        // Для короткого КП или неактивной вкладки показываем основную кнопку, скрываем КП 1 и КП 2
+        if (copyKP1Btn) copyKP1Btn.style.display = 'none';
+        if (copyKP2Btn) copyKP2Btn.style.display = 'none';
+        if (copyFullKPBtn) copyFullKPBtn.style.display = '';
+    }
+}
+
+/**
+ * Копирует КП 1 (первый вариант) из длинного КП
+ */
+function copyKP1() {
+    const offerText = document.getElementById('commercial-offer');
+    if (!offerText) {
+        showError("Ошибка: текстовое поле не найдено!");
+        return;
+    }
+    
+    const fullText = offerText.value;
+    if (!fullText || fullText === "Здесь будет ваше коммерческое предложение.") {
+        showWarning("Сначала рассчитайте стоимость теплицы, чтобы сформировать коммерческое предложение.");
+        return;
+    }
+    
+    // Ищем разделитель ВАРИАНТ 2
+    const variant2Index = fullText.indexOf('==================================================');
+    if (variant2Index === -1) {
+        // Если ВАРИАНТ 2 нет, копируем весь текст
+        copyTextToClipboard(fullText, "КП скопировано!");
+        return;
+    }
+    
+    // Берем текст до ВАРИАНТ 2
+    const kp1Text = fullText.substring(0, variant2Index).trim();
+    
+    if (kp1Text) {
+        copyTextToClipboard(kp1Text, "КП 1 скопировано!");
+    } else {
+        showError("Не удалось выделить КП 1.");
+    }
+}
+
+/**
+ * Копирует КП 2 (второй вариант) из длинного КП
+ */
+function copyKP2() {
+    const offerText = document.getElementById('commercial-offer');
+    if (!offerText) {
+        showError("Ошибка: текстовое поле не найдено!");
+        return;
+    }
+    
+    const fullText = offerText.value;
+    if (!fullText || fullText === "Здесь будет ваше коммерческое предложение.") {
+        showWarning("Сначала рассчитайте стоимость теплицы, чтобы сформировать коммерческое предложение.");
+        return;
+    }
+    
+    // Ищем разделитель ВАРИАНТ 2
+    const variant2Index = fullText.indexOf('==================================================');
+    if (variant2Index === -1) {
+        showWarning("Второй вариант КП не найден. Используйте обычную кнопку 'Скопировать КП'.");
+        return;
+    }
+    
+    // Берем текст после разделителя
+    const kp2Text = fullText.substring(variant2Index).trim();
+    
+    if (kp2Text) {
+        copyTextToClipboard(kp2Text, "КП 2 скопировано!");
+    } else {
+        showError("Не удалось выделить КП 2.");
+    }
+}
+
+/**
+ * Вспомогательная функция для копирования текста в буфер обмена
+ */
+function copyTextToClipboard(text, successMessage) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            showSuccess(successMessage);
+        }).catch(() => {
+            // Fallback на старый метод
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showSuccess(successMessage);
+            } catch (err) {
+                showError("Не удалось скопировать. Попробуйте выделить текст вручную.");
+            }
+            document.body.removeChild(textarea);
+        });
+    } else {
+        // Fallback для старых браузеров
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            showSuccess(successMessage);
+        } catch (err) {
+            showError("Не удалось скопировать. Попробуйте выделить текст вручную.");
+        }
+        document.body.removeChild(textarea);
+    }
+}
+
+/**
+ * Разделяет текст на части для Авито (максимум 800 символов на часть)
+ * Копирует части по очереди при каждом нажатии
+ * @deprecated Используйте copyKP1() и copyKP2() вместо этой функции
+ */
+function splitForAvito() {
+    const textareaId = activeOfferTab === 'short' ? 'commercial-offer-short' : 'commercial-offer';
+    const offerText = document.getElementById(textareaId);
+    
+    if (!offerText) {
+        showError("Ошибка: текстовое поле не найдено!");
+        return;
+    }
+    
+    const text = offerText.value.trim();
+    if (!text || 
+        text === "Здесь будет ваше короткое КП." || 
+        text === "Здесь будет ваше коммерческое предложение.") {
+        showWarning("Сначала рассчитайте стоимость теплицы, чтобы сформировать коммерческое предложение.");
+        return;
+    }
+    
+    const AVITO_LIMIT = 800;
+    
+    if (text.length <= AVITO_LIMIT) {
+        showInfo("Текст уже помещается в одно сообщение Авито (до 800 символов).");
+        return;
+    }
+    
+    // Проверяем, есть ли уже сохраненные части
+    const storageKey = `avito-parts-${textareaId}`;
+    const currentIndexKey = `avito-current-index-${textareaId}`;
+    const originalTextKey = `avito-original-text-${textareaId}`;
+    
+    const savedOriginalText = sessionStorage.getItem(originalTextKey);
+    const savedParts = sessionStorage.getItem(storageKey);
+    
+    // Если текст изменился или частей нет - разделяем заново
+    let parts = null;
+    let currentIndex = 0;
+    
+    if (savedOriginalText === text && savedParts) {
+        // Текст не изменился, используем сохраненные части
+        parts = JSON.parse(savedParts);
+        currentIndex = parseInt(sessionStorage.getItem(currentIndexKey) || '0', 10);
+    }
+    
+    // Если частей нет или текст изменился - разделяем заново
+    if (!parts || parts.length === 0) {
+        parts = [];
+        let currentPart = '';
+        
+        // Разделяем по строкам (переносы строк - естественные точки разрыва)
+        const lines = text.split('\n');
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const lineWithNewline = i < lines.length - 1 ? line + '\n' : line;
+            const testPart = currentPart + lineWithNewline;
+            
+            if (testPart.length <= AVITO_LIMIT) {
+                currentPart = testPart;
+            } else {
+                // Если текущая часть не пустая, сохраняем её
+                if (currentPart.trim()) {
+                    parts.push(currentPart.trim());
+                }
+                
+                // Если одна строка больше лимита, режем по словам
+                if (line.length > AVITO_LIMIT) {
+                    const words = line.split(/(\s+)/);
+                    let wordPart = '';
+                    for (const word of words) {
+                        const testWordPart = wordPart + word;
+                        if (testWordPart.length <= AVITO_LIMIT) {
+                            wordPart = testWordPart;
+                        } else {
+                            if (wordPart.trim()) {
+                                parts.push(wordPart.trim());
+                            }
+                            wordPart = word;
+                        }
+                    }
+                    currentPart = wordPart + (i < lines.length - 1 ? '\n' : '');
+                } else {
+                    currentPart = lineWithNewline;
+                }
+            }
+        }
+        
+        if (currentPart.trim()) {
+            parts.push(currentPart.trim());
+        }
+        
+        // Сохраняем части и оригинальный текст в sessionStorage
+        sessionStorage.setItem(storageKey, JSON.stringify(parts));
+        sessionStorage.setItem(originalTextKey, text);
+        currentIndex = 0;
+    }
+    
+    // Копируем текущую часть
+    if (currentIndex < parts.length) {
+        const partToCopy = parts[currentIndex];
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(partToCopy).then(() => {
+                const totalParts = parts.length;
+                const partNumber = currentIndex + 1;
+                
+                if (partNumber < totalParts) {
+                    showSuccess(`📋 Часть ${partNumber} из ${totalParts} скопирована! Нажмите кнопку еще раз для части ${partNumber + 1}.`, null, 4000);
+                } else {
+                    showSuccess(`📋 Часть ${partNumber} из ${totalParts} скопирована! Все части скопированы.`, null, 4000);
+                    // Очищаем сохраненные части после копирования всех
+                    sessionStorage.removeItem(storageKey);
+                    sessionStorage.removeItem(currentIndexKey);
+                    sessionStorage.removeItem(originalTextKey);
+                }
+                
+                // Увеличиваем индекс для следующего копирования
+                currentIndex++;
+                sessionStorage.setItem(currentIndexKey, currentIndex.toString());
+            }).catch(() => {
+                showError("Не удалось скопировать. Попробуйте еще раз.");
+            });
+        } else {
+            // Fallback для старых браузеров
+            offerText.value = partToCopy;
+            offerText.select();
+            showInfo(`Часть ${currentIndex + 1} из ${parts.length} выделена. Скопируйте вручную (Ctrl+C).`);
+            currentIndex++;
+            sessionStorage.setItem(currentIndexKey, currentIndex.toString());
+        }
+    } else {
+        // Все части скопированы, начинаем заново
+        sessionStorage.removeItem(storageKey);
+        sessionStorage.removeItem(currentIndexKey);
+        sessionStorage.removeItem(originalTextKey);
+        showInfo("Все части скопированы. Нажмите кнопку еще раз для повторного разделения.");
+    }
+}
+
 function copyCommercialOffer() {
     const textareaId = activeOfferTab === 'short' ? 'commercial-offer-short' : 'commercial-offer';
     const offerText = document.getElementById(textareaId);
@@ -3229,6 +3627,27 @@ function copyCommercialOffer() {
         textValue === "Здесь будет ваше коммерческое предложение.") {
         showWarning("Сначала рассчитайте стоимость теплицы, чтобы сформировать коммерческое предложение.");
         return;
+    }
+    
+    const AVITO_LIMIT = 800;
+    const charCount = textValue.length;
+    
+    // Проверяем лимит Авито и показываем предупреждение (один раз за сессию)
+    if (charCount > AVITO_LIMIT) {
+        const warningKey = `avito-warning-shown-${textareaId}`;
+        if (!sessionStorage.getItem(warningKey)) {
+            const partsCount = Math.ceil(charCount / AVITO_LIMIT);
+            showWarning(
+                `⚠️ ВНИМАНИЕ! Это длинное КП (${charCount} символов) не отправится в Авито!\n\n` +
+                `Лимит Авито: ${AVITO_LIMIT} символов на сообщение.\n` +
+                `Если превысить лимит, сообщение не отправится и клиент его не увидит.\n` +
+                `Ваш текст нужно разделить на ${partsCount} ${partsCount === 2 ? 'части' : partsCount === 3 ? 'части' : 'частей'}.\n\n` +
+                `Используйте кнопки "Скопировать КП 1" и "Скопировать КП 2" ниже.`,
+                'Длинное КП не отправится в Авито!',
+                6000
+            );
+            sessionStorage.setItem(warningKey, 'true');
+        }
     }
     
     offerText.select();
@@ -3480,6 +3899,34 @@ async function initializeCalculator() {
             adminButton.style.display = "none";
             adminButton.style.visibility = "hidden";
         }
+    }
+    
+    // Инициализация счетчиков символов для КП
+    initCharCounters();
+}
+
+/**
+ * Инициализирует счетчики символов для textarea КП
+ */
+function initCharCounters() {
+    const shortTextarea = document.getElementById('commercial-offer-short');
+    const longTextarea = document.getElementById('commercial-offer');
+    
+    // Инициализируем счетчики для обоих textarea
+    if (shortTextarea) {
+        updateCharCounter('commercial-offer-short');
+        // Добавляем обработчик для обновления счетчика при изменении текста
+        shortTextarea.addEventListener('input', () => {
+            updateCharCounter('commercial-offer-short');
+        });
+    }
+    
+    if (longTextarea) {
+        updateCharCounter('commercial-offer');
+        // Добавляем обработчик для обновления счетчика при изменении текста
+        longTextarea.addEventListener('input', () => {
+            updateCharCounter('commercial-offer');
+        });
     }
 }
 
@@ -6588,6 +7035,10 @@ window.toggleFAQ = toggleFAQ;
 window.copyFAQAnswer = copyFAQAnswer;
 window.filterFAQ = filterFAQ;
 window.filterFAQByCategory = filterFAQByCategory;
+window.splitForAvito = splitForAvito;
+window.copyCommercialOffer = copyCommercialOffer;
+window.copyKP1 = copyKP1;
+window.copyKP2 = copyKP2;
 window.showBedsModal = showBedsModal;
 window.closeBedsModal = closeBedsModal;
 window.changeBedQuantity = changeBedQuantity;
@@ -7464,6 +7915,7 @@ function rebuildShortOfferWithGifts(overrideSelectedGifts = null) {
         }
         newOffer += datePart;
         shortOfferTextarea.value = newOffer;
+        updateCharCounter('commercial-offer-short');
         return;
     }
     
@@ -7514,6 +7966,7 @@ function rebuildShortOfferWithGifts(overrideSelectedGifts = null) {
     newOffer += datePart;
     
     shortOfferTextarea.value = newOffer;
+    updateCharCounter('commercial-offer-short');
 }
 
 /**
@@ -7584,18 +8037,6 @@ function rebuildLongOfferWithGifts(overrideSelectedGifts = null) {
     // Удаляем множественные пустые строки
     currentOffer = currentOffer.replace(/\n{3,}/g, '\n\n');
     
-    // Находим блок условий оплаты
-    const paymentMatch = currentOffer.match(/\n💳 Без предоплаты/);
-    if (!paymentMatch) {
-        return; // Если структура неожиданная, не трогаем
-    }
-    
-    // Часть до условий оплаты
-    const beforeGifts = currentOffer.substring(0, paymentMatch.index);
-    
-    // Часть после условий оплаты (включая условия)
-    const afterPayment = currentOffer.substring(paymentMatch.index);
-    
     // Получаем текст подарков
     let giftsText = '';
     if (overrideSelectedGifts && Object.keys(overrideSelectedGifts).length > 0) {
@@ -7604,15 +8045,47 @@ function rebuildLongOfferWithGifts(overrideSelectedGifts = null) {
         giftsText = getGiftsText();
     }
     
-    // Пересобираем КП: до условий + отступ + подарки (если есть) + отступ + условия и остальное
-    let newOffer = beforeGifts;
-    if (giftsText && giftsText.trim() !== '') {
-        // ИСПРАВЛЕНО: Подарки вставляются перед условиями оплаты с одним отступом (пустая строка перед блоком)
-        newOffer += '\n' + giftsText.trimStart() + '\n';
+    // Если подарков нет, просто возвращаем КП как есть
+    if (!giftsText || giftsText.trim() === '') {
+        longOfferTextarea.value = currentOffer;
+        return;
     }
-    newOffer += afterPayment;
+    
+    // ИСПРАВЛЕНО: Добавляем подарки перед КАЖДЫМ блоком условий оплаты
+    // Находим все блоки условий оплаты
+    const paymentMatches = [...currentOffer.matchAll(/\n💳 Без предоплаты/g)];
+    if (paymentMatches.length === 0) {
+        return; // Если структура неожиданная, не трогаем
+    }
+    
+    // Собираем новое КП, добавляя подарки перед каждым блоком условий оплаты
+    let newOffer = '';
+    let lastIndex = 0;
+    
+    paymentMatches.forEach((match, index) => {
+        // Добавляем часть до блока условий оплаты
+        newOffer += currentOffer.substring(lastIndex, match.index);
+        
+        // Добавляем подарки перед блоком условий оплаты (с одним отступом)
+        newOffer += '\n' + giftsText.trimStart() + '\n';
+        
+        // Находим конец блока условий оплаты (до следующего блока или до конца)
+        const nextMatch = paymentMatches[index + 1];
+        const endIndex = nextMatch ? nextMatch.index : currentOffer.length;
+        
+        // Добавляем блок условий оплаты
+        newOffer += currentOffer.substring(match.index, endIndex);
+        
+        lastIndex = endIndex;
+    });
+    
+    // Добавляем оставшуюся часть (если есть)
+    if (lastIndex < currentOffer.length) {
+        newOffer += currentOffer.substring(lastIndex);
+    }
     
     longOfferTextarea.value = newOffer;
+    updateCharCounter('commercial-offer');
 }
 
 /**
@@ -7829,12 +8302,60 @@ function getGiftsTextFromObject(selectedGifts) {
     }
     
     // ИСПРАВЛЕНО: Формируем список подарков в одну строку через запятую
+    // Для всех подарков суммируем количество с правильным склонением
     const giftsList = [];
     giftCounts.forEach((count, giftName) => {
         if (count === 1) {
+            // Если выбран один раз - просто название
             giftsList.push(giftName);
         } else {
-            giftsList.push(`${giftName} (${count} шт)`);
+            // Если выбрано несколько раз - суммируем с правильным склонением
+            let pluralForm = '';
+            
+            if (giftName === '4 грунтозацепа') {
+                // Специальная обработка для грунтозацепов - умножаем на 4
+                const totalStakes = count * 4;
+                let stakesWord = 'грунтозацепов';
+                if (totalStakes === 1) {
+                    stakesWord = 'грунтозацеп';
+                } else if (totalStakes >= 2 && totalStakes <= 4) {
+                    stakesWord = 'грунтозацепа';
+                }
+                pluralForm = `${totalStakes} ${stakesWord}`;
+            } else if (giftName === 'дополнительная форточка') {
+                // 2-4: дополнительные форточки, 5+: дополнительных форточек
+                if (count >= 2 && count <= 4) {
+                    pluralForm = `${count} дополнительные форточки`;
+                } else {
+                    pluralForm = `${count} дополнительных форточек`;
+                }
+            } else if (giftName === 'капельный полив механический') {
+                // 2-4: капельных полива механических, 5+: капельных поливов механических
+                if (count >= 2 && count <= 4) {
+                    pluralForm = `${count} капельных полива механических`;
+                } else {
+                    pluralForm = `${count} капельных поливов механических`;
+                }
+            } else if (giftName === 'автомат для форточки') {
+                // 2-4: автомата для форточки, 5+: автоматов для форточки
+                if (count >= 2 && count <= 4) {
+                    pluralForm = `${count} автомата для форточки`;
+                } else {
+                    pluralForm = `${count} автоматов для форточки`;
+                }
+            } else if (giftName === 'автоматическая форточка (форточка + автомат)') {
+                // 2-4: автоматические форточки, 5+: автоматических форточек
+                if (count >= 2 && count <= 4) {
+                    pluralForm = `${count} автоматические форточки (форточка + автомат)`;
+                } else {
+                    pluralForm = `${count} автоматических форточек (форточка + автомат)`;
+                }
+            } else {
+                // Для неизвестных подарков - просто количество
+                pluralForm = `${count} ${giftName}`;
+            }
+            
+            giftsList.push(pluralForm);
         }
     });
     
@@ -7899,12 +8420,60 @@ function getGiftsText() {
     }
     
     // ИСПРАВЛЕНО: Формируем список подарков в одну строку через запятую
+    // Для всех подарков суммируем количество с правильным склонением
     const giftsList = [];
     giftCounts.forEach((count, giftName) => {
         if (count === 1) {
+            // Если выбран один раз - просто название
             giftsList.push(giftName);
         } else {
-            giftsList.push(`${giftName} (${count} шт)`);
+            // Если выбрано несколько раз - суммируем с правильным склонением
+            let pluralForm = '';
+            
+            if (giftName === '4 грунтозацепа') {
+                // Специальная обработка для грунтозацепов - умножаем на 4
+                const totalStakes = count * 4;
+                let stakesWord = 'грунтозацепов';
+                if (totalStakes === 1) {
+                    stakesWord = 'грунтозацеп';
+                } else if (totalStakes >= 2 && totalStakes <= 4) {
+                    stakesWord = 'грунтозацепа';
+                }
+                pluralForm = `${totalStakes} ${stakesWord}`;
+            } else if (giftName === 'дополнительная форточка') {
+                // 2-4: дополнительные форточки, 5+: дополнительных форточек
+                if (count >= 2 && count <= 4) {
+                    pluralForm = `${count} дополнительные форточки`;
+                } else {
+                    pluralForm = `${count} дополнительных форточек`;
+                }
+            } else if (giftName === 'капельный полив механический') {
+                // 2-4: капельных полива механических, 5+: капельных поливов механических
+                if (count >= 2 && count <= 4) {
+                    pluralForm = `${count} капельных полива механических`;
+                } else {
+                    pluralForm = `${count} капельных поливов механических`;
+                }
+            } else if (giftName === 'автомат для форточки') {
+                // 2-4: автомата для форточки, 5+: автоматов для форточки
+                if (count >= 2 && count <= 4) {
+                    pluralForm = `${count} автомата для форточки`;
+                } else {
+                    pluralForm = `${count} автоматов для форточки`;
+                }
+            } else if (giftName === 'автоматическая форточка (форточка + автомат)') {
+                // 2-4: автоматические форточки, 5+: автоматических форточек
+                if (count >= 2 && count <= 4) {
+                    pluralForm = `${count} автоматические форточки (форточка + автомат)`;
+                } else {
+                    pluralForm = `${count} автоматических форточек (форточка + автомат)`;
+                }
+            } else {
+                // Для неизвестных подарков - просто количество
+                pluralForm = `${count} ${giftName}`;
+            }
+            
+            giftsList.push(pluralForm);
         }
     });
     
