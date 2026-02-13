@@ -999,6 +999,24 @@ function updateDeliveryDateDisplay() {
     // Дата теперь показывается только в модальном окне
 }
 
+/**
+ * Обновляет дату в блоке результата доставки при смене "Без сборки" / "Со сборкой".
+ * Учитывает: без сборки — только дата доставки; со сборкой — дата сборки + ограничения (кроме...).
+ */
+function updateDeliveryResultDate() {
+    const resultDiv = document.getElementById('result');
+    if (!resultDiv || !resultDiv.innerText.trim() || !currentDeliveryDate) return;
+    const withAssembly = document.querySelector('input[name="deliveryType"]:checked')?.value === 'withAssembly';
+    const dateText = getDeliveryDateTextForKP(withAssembly);
+    if (!dateText) return;
+    const lines = resultDiv.innerText.split('\n');
+    if (lines.length >= 2) {
+        const dateLine = dateText.includes('Доставка:') ? dateText : 'Доставка: с ' + dateText;
+        lines[1] = '📅 ' + dateLine;
+        resultDiv.innerText = lines.join('\n');
+    }
+}
+
 // Функция для загрузки городов из Supabase с учётом пагинации
 async function loadCities() {
     // Проверяем кеш
@@ -4302,6 +4320,7 @@ async function refreshDeliveryDates() {
 window.showDeliveryDatesModal = showDeliveryDatesModal;
 window.closeDeliveryDatesModal = closeDeliveryDatesModal;
 window.refreshDeliveryDates = refreshDeliveryDates;
+window.updateDeliveryResultDate = updateDeliveryResultDate;
 
 // Функция закрытия модального окна
 function closeDeliveryDatesModal() {

@@ -157,11 +157,11 @@
         
         <div class="delivery-options">
           <label>
-            <input type="radio" name="deliveryType" value="withoutAssembly" checked>
+            <input type="radio" name="deliveryType" value="withoutAssembly" checked onchange="updateDeliveryResultDate()">
             <span>Без сборки</span>
           </label>
           <label>
-            <input type="radio" name="deliveryType" value="withAssembly">
+            <input type="radio" name="deliveryType" value="withAssembly" onchange="updateDeliveryResultDate()">
             <span>Со сборкой</span>
           </label>
         </div>
