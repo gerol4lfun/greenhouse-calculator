@@ -191,11 +191,19 @@ bot.on('message', async (msg) => {
 
         if (results.success.length > 0) {
             report += `\n<b>Обновленные города:</b>\n`;
-            results.success.slice(0, 10).forEach(item => {
-                report += `• ${item.city} - ${item.date} (${item.action === 'created' ? 'создан' : 'обновлен'})\n`;
+            results.success.slice(0, 15).forEach(item => {
+                let line = `• ${item.city} - ${item.date}`;
+                if (item.assembly_date && item.assembly_date !== item.date) {
+                    line += `, сборки с ${item.assembly_date}`;
+                }
+                if (item.restrictions) {
+                    line += ` (кроме ${item.restrictions})`;
+                }
+                line += ' (обновлен)';
+                report += line + '\n';
             });
-            if (results.success.length > 10) {
-                report += `\n... и еще ${results.success.length - 10} городов`;
+            if (results.success.length > 15) {
+                report += `\n... и еще ${results.success.length - 15} городов`;
             }
         }
 

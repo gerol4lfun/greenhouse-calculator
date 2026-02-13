@@ -1,5 +1,13 @@
 # Скрипты
 
+## npm run
+
+| Команда | Скрипт | Описание |
+|---------|--------|----------|
+| `npm run kb:import` | import_kb.js | Импорт базы знаний в Supabase |
+| `npm run kb:search` | getKnowledgeBase.js | Поиск в базе знаний |
+| `npm run beds:import` | load_beds_normalized.js | Импорт грядок в Supabase |
+
 ## import_kb.js
 
 Импортёр базы знаний из JSON файла в Supabase.

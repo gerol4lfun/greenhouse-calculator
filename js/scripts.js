@@ -1,7 +1,7 @@
 
 // Константа для контроля отладки
 const DEBUG = false; // Отключено для продакшена
-const APP_VERSION = "v205"; // v205: Улучшения подарков и КП - объединение подарков с правильным склонением (2 форточки вместо "форточка (2 шт)"), полный ВАРИАНТ 2 с подарками и условиями оплаты, две кнопки для копирования КП 1 и КП 2, замена "Предложение действительно до..." на "Ближайшая дата доставки", улучшенные предупреждения о лимите Авито с объяснением что сообщение не отправится // v204: Интеграция галереи фотографий теплиц и инструкций по сборке - добавлена внутренняя галерея фотографий теплиц с навигацией по типам/вариантам, добавлен раздел инструкций по сборке с поиском и фильтрацией, улучшен дизайн модальных окон, оптимизирована мобильная верстка, исправлены проблемы с копированием изображений в буфер обмена на macOS, обновлен favicon - добавлена профессиональная иконка калькулятора // v203: Добавлен favicon.ico для устранения ошибки 404, настроено кеширование статических ресурсов (изображения, видео, CSS, JS) через meta-теги и .htaccess, добавлено предупреждение в раздел "Автомат для форточки" о том, что он устанавливается только на дополнительную форточку, сделаны кнопки "скачать" менее заметными (только иконка, меньший размер, приглушенный цвет), добавлена полная надпись "Скачать" в полноэкранном режиме просмотра фото, добавлены мобильные стили для product-info-modal и polycarbonate-info-modal, улучшена адаптивность всех элементов // v202: Сделана вся область названия товара кликабельной (не только иконка), кнопка информации для поликарбоната переделана в стиле product-info-link (прозрачный фон, синий цвет, интегрирована в label), улучшена интерактивность с hover-эффектами
+const APP_VERSION = "v208"; // v208: Даты без "с" в простых случаях; доставки/сборки в столбце Даты; парсер+бот исправлены — убраны "Город доставки", первое слово = город — раздельные даты (delivery_date, assembly_date), ограничения по сборке, поддержка формата "Город доставки с X, сборки с Y (кроме Z)" - объединение подарков с правильным склонением (2 форточки вместо "форточка (2 шт)"), полный ВАРИАНТ 2 с подарками и условиями оплаты, две кнопки для копирования КП 1 и КП 2, замена "Предложение действительно до..." на "Ближайшая дата доставки", улучшенные предупреждения о лимите Авито с объяснением что сообщение не отправится // v204: Интеграция галереи фотографий теплиц и инструкций по сборке - добавлена внутренняя галерея фотографий теплиц с навигацией по типам/вариантам, добавлен раздел инструкций по сборке с поиском и фильтрацией, улучшен дизайн модальных окон, оптимизирована мобильная верстка, исправлены проблемы с копированием изображений в буфер обмена на macOS, обновлен favicon - добавлена профессиональная иконка калькулятора // v203: Добавлен favicon.ico для устранения ошибки 404, настроено кеширование статических ресурсов (изображения, видео, CSS, JS) через meta-теги и .htaccess, добавлено предупреждение в раздел "Автомат для форточки" о том, что он устанавливается только на дополнительную форточку, сделаны кнопки "скачать" менее заметными (только иконка, меньший размер, приглушенный цвет), добавлена полная надпись "Скачать" в полноэкранном режиме просмотра фото, добавлены мобильные стили для product-info-modal и polycarbonate-info-modal, улучшена адаптивность всех элементов // v202: Сделана вся область названия товара кликабельной (не только иконка), кнопка информации для поликарбоната переделана в стиле product-info-link (прозрачный фон, синий цвет, интегрирована в label), улучшена интерактивность с hover-эффектами
 
 // ==================== СИСТЕМА УВЕДОМЛЕНИЙ (TOAST) ====================
 
@@ -245,6 +245,18 @@ function normalizeString(str) {
     if (!str) return "";
     // Заменяем обычные и неразрывные пробелы на пустую строку
     return str.trim().toLowerCase().replace(/[\s\u00A0]+/g, "");
+}
+
+/**
+ * Очищает название города от суффиксов "доставки" и "сборки" (первое слово = город)
+ * "Ставрополь доставки" → "Ставрополь", "Краснодар доставки" → "Краснодар"
+ */
+function cleanDeliveryCityName(cityName) {
+    if (!cityName) return cityName || '';
+    return cityName
+        .replace(/\s+доставки\s*$/i, '')
+        .replace(/\s+сборки\s*$/i, '')
+        .trim() || cityName;
 }
 
 // Функция нормализации названий городов (заменяет Ё на Е для сравнения)
@@ -572,7 +584,8 @@ function getFormCategory(formName) {
 let currentCityData = []; // Данные для текущего города
 let deliveryCost = 0; // Стоимость доставки
 let currentDeliveryDate = null; // Текущая дата доставки для выбранного города
-let currentDeliveryRestrictions = null; // Текущие ограничения доставки для выбранного города
+let currentDeliveryAssemblyDate = null; // Дата сборки (null = совпадает с доставкой)
+let currentDeliveryRestrictions = null; // Ограничения по датам сборки
 let activeOfferTab = 'short'; // Активная вкладка КП: 'short' или 'long'
 
 // Кеширование для оптимизации производительности
@@ -867,37 +880,72 @@ function isNetworkError(error) {
            (error.message && error.message.toLowerCase().includes('failed to fetch'));
 }
 
+/**
+ * Формирует текст даты доставки/сборки для КП с учётом типа заказа
+ * @param {boolean} withAssembly - Выбрана ли доставка со сборкой
+ * @returns {string} Текст для вставки в КП (напр. "15.02.2026" или "Доставка: с 15.02.2026. Сборка: с 16.02.2026 (кроме 17.02, 20.02)")
+ */
+function getDeliveryDateTextForKP(withAssembly) {
+    if (!currentDeliveryDate) return null;
+    const currentYear = new Date().getFullYear();
+    const restr = currentDeliveryRestrictions ? currentDeliveryRestrictions.split(',').map(r => r.trim()).filter(r => r) : [];
+    const restrictionsStr = restr.length > 0 ? `, кроме ${restr.join(', ')}` : '';
+
+    if (!withAssembly) {
+        // Без сборки — показываем только дату доставки (ограничения к сборке не относятся)
+        return `${currentDeliveryDate}.${currentYear}`;
+    }
+
+    // Со сборкой
+    const assemblyDate = currentDeliveryAssemblyDate || currentDeliveryDate;
+    if (currentDeliveryAssemblyDate && currentDeliveryAssemblyDate !== currentDeliveryDate) {
+        return `Доставка: с ${currentDeliveryDate}.${currentYear}. Сборка: с ${assemblyDate}.${currentYear}${restrictionsStr}`;
+    }
+    return `${assemblyDate}.${currentYear}${restrictionsStr}`;
+}
+
 // Функция загрузки даты доставки для города
 async function loadDeliveryDate(cityName) {
     if (!cityName) {
         currentDeliveryDate = null;
+        currentDeliveryAssemblyDate = null;
         currentDeliveryRestrictions = null;
         updateDeliveryDateDisplay();
         return null;
     }
 
     try {
-        // Пробуем найти точное совпадение
         let { data, error } = await supabaseClient
             .from('delivery_dates')
-            .select('delivery_date, restrictions')
+            .select('delivery_date, assembly_date, restrictions')
             .eq('city_name', cityName)
             .single();
 
-        // Если не найдено, пробуем найти альтернативные названия (например, "Питер" для "Санкт-Петербург")
+        if (error && error.code === '42703') {
+            const { data: fallback } = await supabaseClient
+                .from('delivery_dates')
+                .select('delivery_date, restrictions')
+                .eq('city_name', cityName)
+                .single();
+            if (fallback) {
+                data = { ...fallback, assembly_date: null };
+                error = null;
+            }
+        }
+
         if (error || !data) {
             if (DEBUG) console.log(`Точное совпадение не найдено для "${cityName}", ищем альтернативы...`, error);
             
-            // Пробуем найти по нормализованному названию
             const normalizedCity = normalizeCityName(cityName);
             const { data: altData, error: altError } = await supabaseClient
                 .from('delivery_dates')
-                .select('city_name, delivery_date, restrictions')
+                .select('city_name, delivery_date, assembly_date, restrictions')
                 .limit(100);
 
             if (altError) {
                 console.error("Ошибка при загрузке альтернативных дат:", altError);
                 currentDeliveryDate = null;
+                currentDeliveryAssemblyDate = null;
                 currentDeliveryRestrictions = null;
                 updateDeliveryDateDisplay();
                 return null;
@@ -905,35 +953,39 @@ async function loadDeliveryDate(cityName) {
 
             if (altData && altData.length > 0) {
                 const found = altData.find(item => {
-                    const normalizedItem = normalizeCityName(item.city_name);
+                    const cleanedItem = cleanDeliveryCityName(item.city_name);
+                    const normalizedItem = normalizeCityName(cleanedItem);
                     return normalizedItem === normalizedCity || 
                            normalizedCity.includes(normalizedItem) || 
                            normalizedItem.includes(normalizedCity);
                 });
                 if (found) {
-                    if (DEBUG) console.log(`Найдена дата для "${cityName}" через альтернативное название "${found.city_name}": ${found.delivery_date}`);
+                    if (DEBUG) console.log(`Найдена дата для "${cityName}" через "${found.city_name}": ${found.delivery_date}`);
                     currentDeliveryDate = found.delivery_date;
+                    currentDeliveryAssemblyDate = found.assembly_date || null;
                     currentDeliveryRestrictions = found.restrictions || null;
                     updateDeliveryDateDisplay();
                     return found.delivery_date;
                 }
             }
             
-            if (DEBUG) console.log(`Дата доставки не найдена для города "${cityName}"`);
             currentDeliveryDate = null;
+            currentDeliveryAssemblyDate = null;
             currentDeliveryRestrictions = null;
             updateDeliveryDateDisplay();
             return null;
         }
 
-        if (DEBUG) console.log(`Найдена дата доставки для "${cityName}": ${data.delivery_date}`);
+        // НЕ используем "Город доставки" — источник истины только канонические города
         currentDeliveryDate = data.delivery_date;
+        currentDeliveryAssemblyDate = data.assembly_date || null;
         currentDeliveryRestrictions = data.restrictions || null;
         updateDeliveryDateDisplay();
         return data.delivery_date;
     } catch (err) {
         console.error("Ошибка при загрузке даты доставки:", err);
         currentDeliveryDate = null;
+        currentDeliveryAssemblyDate = null;
         currentDeliveryRestrictions = null;
         updateDeliveryDateDisplay();
         return null;
@@ -1038,6 +1090,8 @@ async function onCityChange() {
         resetDropdown('polycarbonate', 'Сначала выберите город');
         resetAdditionalOptions();
         currentDeliveryDate = null;
+        currentDeliveryAssemblyDate = null;
+        currentDeliveryRestrictions = null;
         updateDeliveryDateDisplay();
         return;
     }
@@ -1929,24 +1983,12 @@ if (!nearestCity) {
 
             deliveryCost = roundedCost; // сохраняем стоимость доставки в глобальной переменной
 
-            // Загружаем дату доставки для найденного города (принудительно обновляем)
-            const deliveryDate = await loadDeliveryDate(nearestCity.name, true);
+            const deliveryDate = await loadDeliveryDate(nearestCity.name);
             
-            // Формируем текст результата с датой доставки
             let resultText = `Стоимость доставки: ${formatPrice(roundedCost)} рублей (${nearestCity.name})`;
-            if (deliveryDate) {
-                const currentYear = new Date().getFullYear();
-                let deliveryDateText = `с ${deliveryDate}.${currentYear}`;
-                
-                // Добавляем ограничения, если они есть
-                if (currentDeliveryRestrictions && currentDeliveryRestrictions.trim()) {
-                    const restrictions = currentDeliveryRestrictions.split(',').map(r => r.trim()).filter(r => r);
-                    if (restrictions.length > 0) {
-                        deliveryDateText += `, кроме ${restrictions.join(', ')}`;
-                    }
-                }
-                
-                resultText += `\n📅 Доставка: ${deliveryDateText}`;
+            const dateText = getDeliveryDateTextForKP(deliveryType === 'withAssembly');
+            if (dateText) {
+                resultText += `\n📅 ${dateText.includes('Доставка:') ? dateText : 'Доставка: с ' + dateText}`;
             }
             document.getElementById('result').innerText = resultText;
         } catch (routeError) {
@@ -2078,8 +2120,8 @@ async function generateCommercialOffer(basePrice, assemblyCost, foundationCost, 
         commercialOffer += `\nДоставка - ${formatPrice(deliveryPrice)} рублей\n`;
     }
     
-    // Добавляем дату доставки в КП, если она есть (опционально, управляется флагом SHOW_DELIVERY_DATE_IN_OFFER)
-    // Если дата не загружена, но город выбран - пробуем загрузить
+    const deliveryTypeForOffer = document.querySelector('input[name="deliveryType"]:checked')?.value;
+    const withAssemblyForOffer = deliveryTypeForOffer === 'withAssembly';
     if (SHOW_DELIVERY_DATE_IN_OFFER) {
         if (!currentDeliveryDate) {
             const selectedCity = document.getElementById("city").value;
@@ -2087,25 +2129,13 @@ async function generateCommercialOffer(basePrice, assemblyCost, foundationCost, 
                 await loadDeliveryDate(selectedCity);
             }
         }
-        
-        if (currentDeliveryDate) {
-            const currentYear = new Date().getFullYear();
-            commercialOffer += `📅 Доставка: с ${currentDeliveryDate}.${currentYear}\n`;
+        const dateText = getDeliveryDateTextForKP(withAssemblyForOffer);
+        if (dateText) {
+            commercialOffer += `📅 ${dateText.includes('Доставка:') ? dateText : 'Доставка: с ' + dateText}\n`;
         }
     }
-    // Формируем текст с датой доставки
-    let deliveryDateText = '';
-    if (currentDeliveryDate) {
-        const currentYear = new Date().getFullYear();
-        deliveryDateText = `📅 Ближайшая дата доставки: ${currentDeliveryDate}.${currentYear}`;
-        if (currentDeliveryRestrictions && currentDeliveryRestrictions.trim()) {
-            const restrictions = currentDeliveryRestrictions.split(',').map(r => r.trim()).filter(r => r);
-            if (restrictions.length > 0) {
-                deliveryDateText += `, кроме ${restrictions.join(', ')}`;
-            }
-        }
-        deliveryDateText += '.';
-    }
+    const dateTextForOffer = getDeliveryDateTextForKP(withAssemblyForOffer);
+    const deliveryDateText = dateTextForOffer ? `📅 Ближайшая дата доставки: ${dateTextForOffer}.` : '';
     
     // Подарки НЕ добавляются здесь - они добавляются через updateCommercialOffersWithGifts()
     // Это предотвращает дублирование подарков в КП
@@ -2440,19 +2470,9 @@ async function generateVariant2Description(altFrame, altArcStep, altPolycarbonat
             variant2Text += `\nДоставка - ${formatPrice(deliveryPriceValue)} рублей\n`;
         }
         
-        // Формируем текст с датой доставки
-        let deliveryDateText = '';
-        if (currentDeliveryDate) {
-            const currentYear = new Date().getFullYear();
-            deliveryDateText = `📅 Ближайшая дата доставки: ${currentDeliveryDate}.${currentYear}`;
-            if (currentDeliveryRestrictions && currentDeliveryRestrictions.trim()) {
-                const restrictions = currentDeliveryRestrictions.split(',').map(r => r.trim()).filter(r => r);
-                if (restrictions.length > 0) {
-                    deliveryDateText += `, кроме ${restrictions.join(', ')}`;
-                }
-            }
-            deliveryDateText += '.';
-        }
+        const deliveryTypeV2 = document.querySelector('input[name="deliveryType"]:checked')?.value;
+        const dateTextV2 = getDeliveryDateTextForKP(deliveryTypeV2 === 'withAssembly');
+        const deliveryDateText = dateTextV2 ? `📅 Ближайшая дата доставки: ${dateTextV2}.` : '';
         
         // Добавляем итоговую сумму
         if (finalTotalPrice2 > 35000) {
@@ -3179,21 +3199,10 @@ async function generateShortOffer(finalTotalPrice1, selectedEntry) {
     // Подарки НЕ добавляются здесь - они добавляются через updateCommercialOffersWithGifts()
     // Это предотвращает дублирование подарков в КП
     
-    // Дата доставки - просто информация, без призыва к действию
-    let deliveryDateText = "17 февраля"; // По умолчанию
-    if (currentDeliveryDate) {
-        const currentYear = new Date().getFullYear();
-        deliveryDateText = currentDeliveryDate + "." + currentYear;
-        
-        // Добавляем ограничения, если они есть
-        if (currentDeliveryRestrictions && currentDeliveryRestrictions.trim()) {
-            const restrictions = currentDeliveryRestrictions.split(',').map(r => r.trim()).filter(r => r);
-            if (restrictions.length > 0) {
-                deliveryDateText += `, кроме ${restrictions.join(', ')}`;
-            }
-        }
-    }
-    shortOffer += `\nБлижайшая дата доставки — ${deliveryDateText}.`;
+    const deliveryType = document.querySelector('input[name="deliveryType"]:checked')?.value;
+    const withAssembly = deliveryType === 'withAssembly';
+    const dateText = getDeliveryDateTextForKP(withAssembly);
+    shortOffer += `\nБлижайшая дата доставки — ${dateText || '17 февраля'}.`;
     
     // Записываем в textarea
     const shortOfferTextarea = document.getElementById("commercial-offer-short");
@@ -3742,6 +3751,8 @@ async function resetAllFilters() {
     // Сброс глобальной переменной стоимости доставки
     deliveryCost = 0;
     currentDeliveryDate = null;
+    currentDeliveryAssemblyDate = null;
+    currentDeliveryRestrictions = null;
     updateDeliveryDateDisplay();
 
     // Сбрасываем текст КП и результатов
@@ -4318,7 +4329,7 @@ async function loadAllDeliveryDates(forceRefresh = false) {
         
         let query = supabaseClient
             .from('delivery_dates')
-            .select('city_name, delivery_date, restrictions')
+            .select('city_name, delivery_date, assembly_date, restrictions')
             .order('city_name');
         
         // Выполняем запрос - Supabase всегда возвращает актуальные данные из базы
@@ -4326,21 +4337,16 @@ async function loadAllDeliveryDates(forceRefresh = false) {
         
         if (DEBUG) console.log('📊 Получено записей:', data ? data.length : 0, 'Ошибка:', error);
         
-        // Если ошибка из-за отсутствия колонки restrictions, загружаем без неё
-        if (error && error.code === '42703' && error.message.includes('restrictions')) {
-            console.warn('⚠️ Колонка restrictions не найдена. Загружаем данные без ограничений. Выполните миграцию: db/migrations/20260203_add_restrictions_to_delivery_dates.sql');
-            const { data: dataWithoutRestrictions, error: errorWithoutRestrictions } = await supabaseClient
+        if (error && error.code === '42703') {
+            console.warn('⚠️ Колонка assembly_date или restrictions не найдена. Выполните миграцию: db/migrations/20260213_add_assembly_date_to_delivery_dates.sql');
+            const { data: fallbackData, error: fallbackError } = await supabaseClient
                 .from('delivery_dates')
                 .select('city_name, delivery_date')
                 .order('city_name');
-            
-            if (errorWithoutRestrictions) {
-                throw errorWithoutRestrictions;
+            if (!fallbackError && fallbackData) {
+                data = fallbackData.map(item => ({ ...item, assembly_date: null, restrictions: null }));
+                error = null;
             }
-            
-            // Добавляем пустое поле restrictions для совместимости
-            data = dataWithoutRestrictions.map(item => ({ ...item, restrictions: null }));
-            error = null;
         }
 
         // Добавляем пустое поле restrictions для совместимости с кодом отрисовки
@@ -4360,44 +4366,28 @@ async function loadAllDeliveryDates(forceRefresh = false) {
                 'орёл': 'Орёл'
             };
             
-            data.forEach(item => {
-                // Нормализуем название города (Питер -> санкт-петербург)
-                const normalizedKey = normalizeCityName(item.city_name);
+            // Фильтруем дубликаты "Город доставки" — показываем только каноническую запись
+            const canonicalData = data.filter(item => !/ доставки$/i.test(item.city_name));
+            
+            canonicalData.forEach(item => {
+                const cleanedCity = cleanDeliveryCityName(item.city_name);
+                const normalizedKey = normalizeCityName(cleanedCity);
                 
-                // Получаем стандартное название с правильным регистром
                 const standardName = standardCityNames[normalizedKey] || 
-                                    (item.city_name.charAt(0).toUpperCase() + item.city_name.slice(1).toLowerCase());
+                                    (cleanedCity.charAt(0).toUpperCase() + cleanedCity.slice(1).toLowerCase());
                 
-                // Обрабатываем restrictions: если пустая строка или только пробелы, устанавливаем null
                 let restrictionsValue = null;
                 if (item.restrictions !== null && item.restrictions !== undefined) {
                     const trimmed = String(item.restrictions).trim();
-                    if (trimmed !== '') {
-                        restrictionsValue = trimmed;
-                    }
+                    if (trimmed !== '') restrictionsValue = trimmed;
                 }
                 
-                // Если уже есть запись с нормализованным названием, приоритет стандартному названию
-                if (!normalizedMap.has(normalizedKey)) {
-                    normalizedMap.set(normalizedKey, {
-                        ...item,
-                        city_name: standardName,
-                        restrictions: restrictionsValue
-                    });
-                } else {
-                    // Приоритет записи, которая уже имеет стандартное название
-                    const existing = normalizedMap.get(normalizedKey);
-                    const existingNormalized = normalizeCityName(existing.city_name);
-                    
-                    // Если текущая запись имеет стандартное название, заменяем
-                    if (standardCityNames[normalizedKey] && item.city_name === standardCityNames[normalizedKey]) {
-                        normalizedMap.set(normalizedKey, {
-                            ...item,
-                            city_name: standardName,
-                            restrictions: restrictionsValue
-                        });
-                    }
-                }
+                normalizedMap.set(normalizedKey, {
+                    ...item,
+                    city_name: standardName,
+                    restrictions: restrictionsValue,
+                    assembly_date: (item.assembly_date && String(item.assembly_date).trim()) || null
+                });
             });
             
             dataWithRestrictions = Array.from(normalizedMap.values());
@@ -4461,21 +4451,41 @@ function renderDeliveryDatesTable(data) {
         return;
     }
 
+    const currentYear = new Date().getFullYear();
     let html = '<table class="delivery-dates-table">';
     html += '<thead><tr>';
-    html += '<th style="width: 40%;">Город</th>';
-    html += '<th style="width: 30%;">Дата доставки</th>';
+    html += '<th style="width: 35%;">Город</th>';
+    html += '<th style="width: 35%;">Даты</th>';
     html += '<th style="width: 30%;">Ограничения</th>';
     html += '</tr></thead>';
     html += '<tbody>';
     
+    const fmtDate = (dm) => {
+        if (!dm) return '';
+        const s = String(dm).trim();
+        if (/\d{4}$/.test(s)) return s;
+        return `${s}.${currentYear}`;
+    };
+    
     data.forEach(item => {
-        const currentYear = new Date().getFullYear();
-        const deliveryDateText = item.delivery_date ? `с ${item.delivery_date}.${currentYear}` : 'Не указано';
+        let datesText = 'Не указано';
+        if (item.delivery_date) {
+            const d = String(item.delivery_date).trim();
+            const a = (item.assembly_date && String(item.assembly_date).trim()) || d;
+            const hasDifferentAssembly = a && d && a !== d;
+            if (hasDifferentAssembly) {
+                datesText = `доставки с ${fmtDate(d)}, сборки с ${fmtDate(a)}`;
+            } else {
+                datesText = fmtDate(d);
+            }
+        }
         
         let restrictionsText = '';
         if (item.restrictions && item.restrictions.trim()) {
-            const restrictions = item.restrictions.split(',').map(r => r.trim()).filter(r => r);
+            const restrictions = item.restrictions
+                .replace(/[()]+/g, '')
+                .split(',')
+                .map(r => r.trim().replace(/[()]/g, '')).filter(r => r);
             if (restrictions.length > 0) {
                 restrictionsText = `кроме ${restrictions.join(', ')}`;
             }
@@ -4483,7 +4493,7 @@ function renderDeliveryDatesTable(data) {
         
         html += '<tr>';
         html += `<td class="city-name">${item.city_name}</td>`;
-        html += `<td class="delivery-date">${deliveryDateText}</td>`;
+        html += `<td class="delivery-date">${datesText}</td>`;
         html += `<td class="delivery-restrictions">${restrictionsText || '—'}</td>`;
         html += '</tr>';
     });
@@ -7876,27 +7886,15 @@ function rebuildShortOfferWithGifts(overrideSelectedGifts = null) {
         const beforeGifts = currentOffer.substring(0, guaranteeMatch.index + guaranteeMatch[0].length);
         const afterGuarantee = currentOffer.substring(guaranteeMatch.index + guaranteeMatch[0].length);
         
-        // Ищем дату доставки
         const deliveryMatch = afterGuarantee.match(/Ближайшая дата доставки[^\n]*/);
         let datePart = '';
         if (deliveryMatch) {
             datePart = '\n' + deliveryMatch[0].trim();
             if (!datePart.endsWith('.')) datePart += '.';
         } else {
-            let deliveryDateText = "17 февраля";
-            if (currentDeliveryDate) {
-                const currentYear = new Date().getFullYear();
-                deliveryDateText = currentDeliveryDate + "." + currentYear;
-                
-                // Добавляем ограничения, если они есть
-                if (currentDeliveryRestrictions && currentDeliveryRestrictions.trim()) {
-                    const restrictions = currentDeliveryRestrictions.split(',').map(r => r.trim()).filter(r => r);
-                    if (restrictions.length > 0) {
-                        deliveryDateText += `, кроме ${restrictions.join(', ')}`;
-                    }
-                }
-            }
-            datePart = '\nБлижайшая дата доставки — ' + deliveryDateText + '.';
+            const dt = document.querySelector('input[name="deliveryType"]:checked')?.value;
+            const dtShort = getDeliveryDateTextForKP(dt === 'withAssembly');
+            datePart = '\nБлижайшая дата доставки — ' + (dtShort || '17 февраля') + '.';
         }
         
         // Получаем текст подарков
@@ -7932,21 +7930,9 @@ function rebuildShortOfferWithGifts(overrideSelectedGifts = null) {
         datePart = '\n' + deliveryMatch[0].trim();
         if (!datePart.endsWith('.')) datePart += '.';
         } else {
-        // Если дата не найдена, получаем из переменной
-        let deliveryDateText = "17 февраля";
-        if (currentDeliveryDate) {
-            const currentYear = new Date().getFullYear();
-            deliveryDateText = currentDeliveryDate + "." + currentYear;
-            
-            // Добавляем ограничения, если они есть
-            if (currentDeliveryRestrictions && currentDeliveryRestrictions.trim()) {
-                const restrictions = currentDeliveryRestrictions.split(',').map(r => r.trim()).filter(r => r);
-                if (restrictions.length > 0) {
-                    deliveryDateText += `, кроме ${restrictions.join(', ')}`;
-                }
-            }
-        }
-        datePart = '\nБлижайшая дата доставки — ' + deliveryDateText + '.';
+        const deliveryTypeShort = document.querySelector('input[name="deliveryType"]:checked')?.value;
+        const dateTextShort = getDeliveryDateTextForKP(deliveryTypeShort === 'withAssembly');
+        datePart = '\nБлижайшая дата доставки — ' + (dateTextShort || '17 февраля') + '.';
     }
     
     // Получаем текст подарков

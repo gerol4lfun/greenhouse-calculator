@@ -3,6 +3,7 @@
 ## Структура
 
 - `20260203_create_knowledge_base.sql` - Основная миграция для создания таблицы knowledge_base
+- `20260213_add_assembly_date_to_delivery_dates.sql` - Добавление поля assembly_date (дата сборки) в delivery_dates
 - `dev_drop_knowledge_base.sql` - DEV-ONLY скрипт для удаления таблицы (только для разработки!)
 
 ## Использование
@@ -36,9 +37,12 @@
 1. Для новой БД:
    - Выполните `20260203_create_knowledge_base.sql`
 
-2. Для пересоздания таблицы в dev:
+2. Для поддержки дат доставки/сборки (v206):
+   - Выполните `20260213_add_assembly_date_to_delivery_dates.sql`
+
+3. Для пересоздания таблицы в dev:
    - Выполните `dev_drop_knowledge_base.sql`
    - Затем выполните `20260203_create_knowledge_base.sql`
 
-3. После создания таблицы:
+4. После создания таблицы knowledge_base:
    - Запустите импорт: `npm run kb:import`
