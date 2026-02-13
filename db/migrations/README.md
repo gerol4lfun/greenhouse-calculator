@@ -4,6 +4,9 @@
 
 - `20260203_create_knowledge_base.sql` - Основная миграция для создания таблицы knowledge_base
 - `20260213_add_assembly_date_to_delivery_dates.sql` - Добавление поля assembly_date (дата сборки) в delivery_dates
+- `20260214_update_delivery_dates_rpc.sql` - RPC для обновления дат доставки
+- `20260214_update_delivery_tariff_fact.sql` - Обновление факта GH-0017 (тарифы 45/50 руб/км)
+- `20260215_create_update_user_password_rpc.sql` - RPC для смены паролей (админ-панель)
 - `dev_drop_knowledge_base.sql` - DEV-ONLY скрипт для удаления таблицы (только для разработки!)
 
 ## Использование
@@ -40,9 +43,15 @@
 2. Для поддержки дат доставки/сборки (v206):
    - Выполните `20260213_add_assembly_date_to_delivery_dates.sql`
 
-3. Для пересоздания таблицы в dev:
+3. Для обновления факта «Доставка: тариф» (новые тарифы 45/50 руб/км):
+   - Выполните `20260214_update_delivery_tariff_fact.sql` — если БД уже содержит импортированные данные
+
+4. Для работы админ-панели (смена паролей):
+   - Выполните `20260215_create_update_user_password_rpc.sql` — создаёт RPC update_user_password
+
+5. Для пересоздания таблицы в dev:
    - Выполните `dev_drop_knowledge_base.sql`
    - Затем выполните `20260203_create_knowledge_base.sql`
 
-4. После создания таблицы knowledge_base:
+6. После создания таблицы knowledge_base:
    - Запустите импорт: `npm run kb:import`
