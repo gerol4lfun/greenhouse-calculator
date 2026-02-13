@@ -1,0 +1,23 @@
+{
+  "name": "greenhouse-calculator",
+  "version": "1.0.0",
+  "description": "Greenhouse calculator with knowledge base",
+  "_projectVersion": "v208",
+  "main": "index.js",
+  "scripts": {
+    "kb:import": "node scripts/import_kb.js",
+    "kb:search": "node scripts/getKnowledgeBase.js",
+    "beds:import": "node scripts/load_beds_normalized.js"
+  },
+  "keywords": [
+    "greenhouse",
+    "calculator",
+    "knowledge-base"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.28.0",
+    "dotenv": "^16.3.1"
+  }
+}
