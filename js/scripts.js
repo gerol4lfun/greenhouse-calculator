@@ -4375,7 +4375,7 @@ async function loadAllDeliveryDates(forceRefresh = false) {
         if (DEBUG) console.log('📊 Получено записей:', data ? data.length : 0, 'Ошибка:', error);
         
         if (error && error.code === '42703') {
-            console.warn('⚠️ Колонка assembly_date или restrictions не найдена. Выполните миграцию: db/migrations/20260213_add_assembly_date_to_delivery_dates.sql');
+            if (DEBUG) console.warn('⚠️ Колонка assembly_date или restrictions не найдена. Выполните миграцию: db/migrations/20260213_add_assembly_date_to_delivery_dates.sql');
             const { data: fallbackData, error: fallbackError } = await supabaseClient
                 .from('delivery_dates')
                 .select('city_name, delivery_date')
@@ -4449,20 +4449,20 @@ async function loadAllDeliveryDates(forceRefresh = false) {
 
         if (error) {
             console.error("❌ Ошибка при загрузке дат доставки:", error);
-            console.error("Детали ошибки:", JSON.stringify(error, null, 2));
+            if (DEBUG) console.error("Детали ошибки:", JSON.stringify(error, null, 2));
             container.innerHTML = 
                 '<div class="no-data" style="color: red; padding: 20px;">Ошибка загрузки данных из базы. Проверьте подключение к Supabase.<br><br>Детали: ' + (error.message || 'Неизвестная ошибка') + '<br>Код ошибки: ' + (error.code || 'N/A') + '</div>';
             return;
         }
 
         if (!dataWithRestrictions || dataWithRestrictions.length === 0) {
-            console.warn("⚠️ Данные о датах доставки отсутствуют или пусты. Загружено записей:", data ? data.length : 0);
+            if (DEBUG) console.warn("⚠️ Данные о датах доставки отсутствуют или пусты. Загружено записей:", data ? data.length : 0);
             container.innerHTML = 
                 '<div class="no-data">Данные о датах доставки отсутствуют в базе данных.</div>';
             return;
         }
         
-        console.log("✅ Успешно загружено дат доставки:", dataWithRestrictions.length);
+        if (DEBUG) console.log("✅ Успешно загружено дат доставки:", dataWithRestrictions.length);
 
         // Формируем таблицу
         renderDeliveryDatesTable(dataWithRestrictions);
@@ -7311,7 +7311,7 @@ async function copyImageToClipboard(imageUrl, button) {
             return;
         } catch (pngError) {
             // Если PNG не сработал, пробуем оригинальный формат
-            console.log('PNG не сработал, пробуем оригинальный формат:', pngError);
+            if (DEBUG) console.log('PNG не сработал, пробуем оригинальный формат:', pngError);
             
             // Получаем оригинальный Blob
             let originalBlob;
