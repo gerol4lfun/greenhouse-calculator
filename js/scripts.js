@@ -1,7 +1,7 @@
 
 // Константа для контроля отладки
 const DEBUG = false; // Отключено для продакшена
-const APP_VERSION = "v208"; // v208: Даты без "с" в простых случаях; доставки/сборки в столбце Даты; парсер+бот исправлены — убраны "Город доставки", первое слово = город — раздельные даты (delivery_date, assembly_date), ограничения по сборке, поддержка формата "Город доставки с X, сборки с Y (кроме Z)" - объединение подарков с правильным склонением (2 форточки вместо "форточка (2 шт)"), полный ВАРИАНТ 2 с подарками и условиями оплаты, две кнопки для копирования КП 1 и КП 2, замена "Предложение действительно до..." на "Ближайшая дата доставки", улучшенные предупреждения о лимите Авито с объяснением что сообщение не отправится // v204: Интеграция галереи фотографий теплиц и инструкций по сборке - добавлена внутренняя галерея фотографий теплиц с навигацией по типам/вариантам, добавлен раздел инструкций по сборке с поиском и фильтрацией, улучшен дизайн модальных окон, оптимизирована мобильная верстка, исправлены проблемы с копированием изображений в буфер обмена на macOS, обновлен favicon - добавлена профессиональная иконка калькулятора // v203: Добавлен favicon.ico для устранения ошибки 404, настроено кеширование статических ресурсов (изображения, видео, CSS, JS) через meta-теги и .htaccess, добавлено предупреждение в раздел "Автомат для форточки" о том, что он устанавливается только на дополнительную форточку, сделаны кнопки "скачать" менее заметными (только иконка, меньший размер, приглушенный цвет), добавлена полная надпись "Скачать" в полноэкранном режиме просмотра фото, добавлены мобильные стили для product-info-modal и polycarbonate-info-modal, улучшена адаптивность всех элементов // v202: Сделана вся область названия товара кликабельной (не только иконка), кнопка информации для поликарбоната переделана в стиле product-info-link (прозрачный фон, синий цвет, интегрирована в label), улучшена интерактивность с hover-эффектами
+const APP_VERSION = "v211"; // v211: Арочная 20×20 — второй вариант "усиленный каркас" (не шаг 0.65) // v210: Админ-панель — RPC update_user_password, выкид при смене пароля (visibilitychange + 30 сек), кнопка только у admin // v209: Тарифы 45/50, даты, КП // v208: Даты, парсер, подарки, КП // v204: Интеграция галереи фотографий теплиц и инструкций по сборке - добавлена внутренняя галерея фотографий теплиц с навигацией по типам/вариантам, добавлен раздел инструкций по сборке с поиском и фильтрацией, улучшен дизайн модальных окон, оптимизирована мобильная верстка, исправлены проблемы с копированием изображений в буфер обмена на macOS, обновлен favicon - добавлена профессиональная иконка калькулятора // v203: Добавлен favicon.ico для устранения ошибки 404, настроено кеширование статических ресурсов (изображения, видео, CSS, JS) через meta-теги и .htaccess, добавлено предупреждение в раздел "Автомат для форточки" о том, что он устанавливается только на дополнительную форточку, сделаны кнопки "скачать" менее заметными (только иконка, меньший размер, приглушенный цвет), добавлена полная надпись "Скачать" в полноэкранном режиме просмотра фото, добавлены мобильные стили для product-info-modal и polycarbonate-info-modal, улучшена адаптивность всех элементов // v202: Сделана вся область названия товара кликабельной (не только иконка), кнопка информации для поликарбоната переделана в стиле product-info-link (прозрачный фон, синий цвет, интегрирована в label), улучшена интерактивность с hover-эффектами
 
 // ==================== СИСТЕМА УВЕДОМЛЕНИЙ (TOAST) ====================
 
@@ -377,40 +377,40 @@ const deliveryRegions = [
     { keywords: ["ярославль", "yaroslavl", "ярославская область"] }
 ];
 
-// Города для карты
+// Города для карты. pricePerKm — тариф руб/км от склада (зависит от города).
 const citiesForMap = [
-    { name: "Москва", coords: [55.751244, 37.618423], boundaryDistance: 20 },
-    { name: "Санкт-Петербург", coords: [59.934280, 30.335099], boundaryDistance: 20 },
-    { name: "Белгород", coords: [50.597735, 36.585823], boundaryDistance: 10 },
-    { name: "Великий Новгород", coords: [58.521400, 31.275505], boundaryDistance: 10 },
-    { name: "Владимир", coords: [56.129057, 40.407031], boundaryDistance: 12 },
-    { name: "Вологда", coords: [59.220492, 39.891568], boundaryDistance: 10 },
-    { name: "Воронеж", coords: [51.661535, 39.200287], boundaryDistance: 15 },
-    { name: "Екатеринбург", coords: [56.838926, 60.605703], boundaryDistance: 15 },
-    { name: "Иваново", coords: [57.000348, 40.973921], boundaryDistance: 12 },
-    { name: "Йошкар-Ола", coords: [56.634431, 47.899888], boundaryDistance: 12 },
-    { name: "Казань", coords: [55.796391, 49.108891], boundaryDistance: 15 },
-    { name: "Калуга", coords: [54.506043, 36.251593], boundaryDistance: 12 },
-    { name: "Кемерово", coords: [55.354968, 86.087314], boundaryDistance: 15 },
-    { name: "Кострома", coords: [57.767961, 40.926858], boundaryDistance: 10 },
-    { name: "Краснодар", coords: [45.035470, 38.975313], boundaryDistance: 12 },
-    { name: "Курск", coords: [51.730361, 36.192647], boundaryDistance: 10 },
-    { name: "Липецк", coords: [52.610150, 39.594180], boundaryDistance: 12 },
-    { name: "Майкоп", coords: [44.607782, 40.105690], boundaryDistance: 10 },
-    { name: "Набережные Челны", coords: [55.727110, 52.404913], boundaryDistance: 12 },
-    { name: "Нижний Новгород", coords: [56.296504, 43.936059], boundaryDistance: 15 },
-    { name: "Новосибирск", coords: [55.008352, 82.935733], boundaryDistance: 15 },
-    { name: "Орёл", coords: [52.967257, 36.069647], boundaryDistance: 10 },
-    { name: "Рязань", coords: [54.629704, 39.741146], boundaryDistance: 12 },
-    { name: "Ставрополь", coords: [45.044838, 41.969230], boundaryDistance: 10 },
-    { name: "Тамбов", coords: [52.721219, 41.452274], boundaryDistance: 10 },
-    { name: "Тверь", coords: [56.858539, 35.917596], boundaryDistance: 12 },
-    { name: "Тула", coords: [54.193122, 37.617348], boundaryDistance: 12 },
-    { name: "Ульяновск", coords: [54.316685, 48.403123], boundaryDistance: 12 },
-    { name: "Чебоксары", coords: [56.146223, 47.251931], boundaryDistance: 12 },
-    { name: "Челябинск", coords: [55.164442, 61.436843], boundaryDistance: 15 },
-    { name: "Черкесск", coords: [44.226863, 42.046782], boundaryDistance: 10 },
-    { name: "Ярославль", coords: [57.626559, 39.893813], boundaryDistance: 10 }
+    { name: "Москва", coords: [55.751244, 37.618423], boundaryDistance: 20, pricePerKm: 45 },
+    { name: "Санкт-Петербург", coords: [59.934280, 30.335099], boundaryDistance: 20, pricePerKm: 45 },
+    { name: "Белгород", coords: [50.597735, 36.585823], boundaryDistance: 10, pricePerKm: 50 },
+    { name: "Великий Новгород", coords: [58.521400, 31.275505], boundaryDistance: 10, pricePerKm: 45 },
+    { name: "Владимир", coords: [56.129057, 40.407031], boundaryDistance: 12, pricePerKm: 50 },
+    { name: "Вологда", coords: [59.220492, 39.891568], boundaryDistance: 10, pricePerKm: 50 },
+    { name: "Воронеж", coords: [51.661535, 39.200287], boundaryDistance: 15, pricePerKm: 50 },
+    { name: "Екатеринбург", coords: [56.838926, 60.605703], boundaryDistance: 15, pricePerKm: 50 },
+    { name: "Иваново", coords: [57.000348, 40.973921], boundaryDistance: 12, pricePerKm: 50 },
+    { name: "Йошкар-Ола", coords: [56.634431, 47.899888], boundaryDistance: 12, pricePerKm: 50 },
+    { name: "Казань", coords: [55.796391, 49.108891], boundaryDistance: 15, pricePerKm: 50 },
+    { name: "Калуга", coords: [54.506043, 36.251593], boundaryDistance: 12, pricePerKm: 45 },
+    { name: "Кемерово", coords: [55.354968, 86.087314], boundaryDistance: 15, pricePerKm: 50 },
+    { name: "Кострома", coords: [57.767961, 40.926858], boundaryDistance: 10, pricePerKm: 50 },
+    { name: "Краснодар", coords: [45.035470, 38.975313], boundaryDistance: 12, pricePerKm: 50 },
+    { name: "Курск", coords: [51.730361, 36.192647], boundaryDistance: 10, pricePerKm: 50 },
+    { name: "Липецк", coords: [52.610150, 39.594180], boundaryDistance: 12, pricePerKm: 50 },
+    { name: "Майкоп", coords: [44.607782, 40.105690], boundaryDistance: 10, pricePerKm: 50 },
+    { name: "Набережные Челны", coords: [55.727110, 52.404913], boundaryDistance: 12, pricePerKm: 50 },
+    { name: "Нижний Новгород", coords: [56.296504, 43.936059], boundaryDistance: 15, pricePerKm: 50 },
+    { name: "Новосибирск", coords: [55.008352, 82.935733], boundaryDistance: 15, pricePerKm: 50 },
+    { name: "Орёл", coords: [52.967257, 36.069647], boundaryDistance: 10, pricePerKm: 50 },
+    { name: "Рязань", coords: [54.629704, 39.741146], boundaryDistance: 12, pricePerKm: 45 },
+    { name: "Ставрополь", coords: [45.044838, 41.969230], boundaryDistance: 10, pricePerKm: 50 },
+    { name: "Тамбов", coords: [52.721219, 41.452274], boundaryDistance: 10, pricePerKm: 50 },
+    { name: "Тверь", coords: [56.858539, 35.917596], boundaryDistance: 12, pricePerKm: 45 },
+    { name: "Тула", coords: [54.193122, 37.617348], boundaryDistance: 12, pricePerKm: 45 },
+    { name: "Ульяновск", coords: [54.316685, 48.403123], boundaryDistance: 12, pricePerKm: 50 },
+    { name: "Чебоксары", coords: [56.146223, 47.251931], boundaryDistance: 12, pricePerKm: 50 },
+    { name: "Челябинск", coords: [55.164442, 61.436843], boundaryDistance: 15, pricePerKm: 50 },
+    { name: "Черкесск", coords: [44.226863, 42.046782], boundaryDistance: 10, pricePerKm: 50 },
+    { name: "Ярославль", coords: [57.626559, 39.893813], boundaryDistance: 10, pricePerKm: 50 }
 ];
 
 // Дополнительные услуги данные
@@ -585,7 +585,7 @@ let currentCityData = []; // Данные для текущего города
 let deliveryCost = 0; // Стоимость доставки
 let currentDeliveryDate = null; // Текущая дата доставки для выбранного города
 let currentDeliveryAssemblyDate = null; // Дата сборки (null = совпадает с доставкой)
-let currentDeliveryRestrictions = null; // Ограничения по датам сборки
+let currentDeliveryRestrictions = null; // Общие ограничения по датам (доставка и сборка)
 let activeOfferTab = 'short'; // Активная вкладка КП: 'short' или 'long'
 
 // Кеширование для оптимизации производительности
@@ -883,25 +883,30 @@ function isNetworkError(error) {
 /**
  * Формирует текст даты доставки/сборки для КП с учётом типа заказа
  * @param {boolean} withAssembly - Выбрана ли доставка со сборкой
- * @returns {string} Текст для вставки в КП (напр. "15.02.2026" или "Доставка: с 15.02.2026. Сборка: с 16.02.2026 (кроме 17.02, 20.02)")
+ * @returns {string} Текст для вставки в КП (только дата, напр. "15.02.2026")
  */
+/** Для КП: только актуальная дата — без служебной инфы. Со сборкой = дата сборки, без = дата доставки. */
 function getDeliveryDateTextForKP(withAssembly) {
     if (!currentDeliveryDate) return null;
-    const currentYear = new Date().getFullYear();
+    const y = new Date().getFullYear();
+    if (!withAssembly) return `${currentDeliveryDate}.${y}`;
+    const a = currentDeliveryAssemblyDate || currentDeliveryDate;
+    return `${a}.${y}`;
+}
+
+/** Текст для блока результата доставки (менеджер озвучивает). Ограничения общие для доставки и сборки. */
+function getDeliveryDateTextForBlock(withAssembly) {
+    if (!currentDeliveryDate) return null;
+    const y = new Date().getFullYear();
+    const d = `${currentDeliveryDate}.${y}`;
     const restr = currentDeliveryRestrictions ? currentDeliveryRestrictions.split(',').map(r => r.trim()).filter(r => r) : [];
-    const restrictionsStr = restr.length > 0 ? `, кроме ${restr.join(', ')}` : '';
+    const r = restr.length > 0 ? ` (кроме ${restr.join(', ')})` : '';
 
-    if (!withAssembly) {
-        // Без сборки — показываем только дату доставки (ограничения к сборке не относятся)
-        return `${currentDeliveryDate}.${currentYear}`;
-    }
+    if (!withAssembly) return `Доставка: с ${d}${r}`;
 
-    // Со сборкой
     const assemblyDate = currentDeliveryAssemblyDate || currentDeliveryDate;
-    if (currentDeliveryAssemblyDate && currentDeliveryAssemblyDate !== currentDeliveryDate) {
-        return `Доставка: с ${currentDeliveryDate}.${currentYear}. Сборка: с ${assemblyDate}.${currentYear}${restrictionsStr}`;
-    }
-    return `${assemblyDate}.${currentYear}${restrictionsStr}`;
+    const a = `${assemblyDate}.${y}`;
+    return `Доставка: с ${d}, сборки с ${a}${r}`;
 }
 
 // Функция загрузки даты доставки для города
@@ -1001,20 +1006,18 @@ function updateDeliveryDateDisplay() {
 
 /**
  * Обновляет дату в блоке результата доставки при смене "Без сборки" / "Со сборкой".
- * Учитывает: без сборки — только дата доставки; со сборкой — дата сборки + ограничения (кроме...).
+ * Показывает всю релевантную инфу для озвучивания менеджером.
  */
 function updateDeliveryResultDate() {
     const resultDiv = document.getElementById('result');
     if (!resultDiv || !resultDiv.innerText.trim() || !currentDeliveryDate) return;
     const withAssembly = document.querySelector('input[name="deliveryType"]:checked')?.value === 'withAssembly';
-    const dateText = getDeliveryDateTextForKP(withAssembly);
-    if (!dateText) return;
+    const dateBlock = getDeliveryDateTextForBlock(withAssembly);
+    if (!dateBlock) return;
+    const dateLines = dateBlock.split('\n').map(l => '📅 ' + l.trim()).filter(Boolean);
     const lines = resultDiv.innerText.split('\n');
-    if (lines.length >= 2) {
-        const dateLine = dateText.includes('Доставка:') ? dateText : 'Доставка: с ' + dateText;
-        lines[1] = '📅 ' + dateLine;
-        resultDiv.innerText = lines.join('\n');
-    }
+    const costLine = lines[0];
+    resultDiv.innerText = [costLine, ...dateLines].join('\n');
 }
 
 // Функция для загрузки городов из Supabase с учётом пагинации
@@ -1931,7 +1934,8 @@ const routePromises = topCities.map(async (entry) => {
         const routeDistance = route.getLength() / 1000; // расстояние по дорогам в км
         return { city: entry.city, distance: routeDistance, route: route };
     } catch (error) {
-        console.error("Ошибка построения маршрута для города", entry.city.name, error);
+        // Маршрут для части складов может не строиться (ограничения API) — используем успешные
+        if (DEBUG) console.warn("Маршрут для", entry.city.name, "не построен, берём другие склады:", error?.message || error);
         return null;
     }
 });
@@ -1989,12 +1993,13 @@ if (!nearestCity) {
 
             const distanceInKm = route.getLength() / 1000;
             const distanceFromBoundary = Math.max(distanceInKm - nearestCity.boundaryDistance, 0);
+            const rate = nearestCity.pricePerKm ?? 50; // тариф руб/км от склада
 
             let cost;
             if (deliveryType === "withoutAssembly") {
-                cost = Math.max(1000, 500 + 40 * distanceFromBoundary);
+                cost = Math.max(1000, 500 + rate * distanceFromBoundary);
             } else {
-                cost = Math.max(1000, 40 * distanceFromBoundary);
+                cost = Math.max(1000, rate * distanceFromBoundary);
             }
 
             const roundedCost = Math.ceil(cost / 50) * 50;
@@ -2004,9 +2009,10 @@ if (!nearestCity) {
             const deliveryDate = await loadDeliveryDate(nearestCity.name);
             
             let resultText = `Стоимость доставки: ${formatPrice(roundedCost)} рублей (${nearestCity.name})`;
-            const dateText = getDeliveryDateTextForKP(deliveryType === 'withAssembly');
-            if (dateText) {
-                resultText += `\n📅 ${dateText.includes('Доставка:') ? dateText : 'Доставка: с ' + dateText}`;
+            const dateBlock = getDeliveryDateTextForBlock(deliveryType === 'withAssembly');
+            if (dateBlock) {
+                const dateLines = dateBlock.split('\n').map(l => '📅 ' + l.trim()).filter(Boolean);
+                resultText += '\n' + dateLines.join('\n');
             }
             document.getElementById('result').innerText = resultText;
         } catch (routeError) {
@@ -2160,7 +2166,7 @@ async function generateCommercialOffer(basePrice, assemblyCost, foundationCost, 
     
     // Если сумма больше 35000 рублей - используем расширенный формат
     if (finalTotalPrice > 35000) {
-        commercialOffer += `\nИтого: ${formatPrice(finalTotalPrice)} рублей\n`;
+        commercialOffer += `\nИтого: ${formatPrice(finalTotalPrice)} рублей\n\n`;
         commercialOffer += `💳 Без предоплаты — оплата по факту.\n` +
             `🌱 Бесплатное хранение до весны с сохранением цены.\n`;
         if (deliveryDateText) {
@@ -2494,7 +2500,7 @@ async function generateVariant2Description(altFrame, altArcStep, altPolycarbonat
         
         // Добавляем итоговую сумму
         if (finalTotalPrice2 > 35000) {
-            variant2Text += `\nИтого: ${formatPrice(finalTotalPrice2)} рублей\n`;
+            variant2Text += `\nИтого: ${formatPrice(finalTotalPrice2)} рублей\n\n`;
         } else {
             variant2Text += `\nИтоговая стоимость - ${formatPrice(finalTotalPrice2)} рублей\n`;
         }
@@ -2532,11 +2538,32 @@ function pickReserveVariant() {
     const currentFrame = document.getElementById("frame").value.trim();
     const currentArcStep = parseFloat(document.getElementById("arcStep").value);
     const currentPolycarbonate = document.getElementById("polycarbonate").value.trim();
+    const currentForm = (document.getElementById("form") && document.getElementById("form").value) ? document.getElementById("form").value.trim() : "";
     const frameSelect = document.getElementById("frame");
     const polycarbonateSelect = document.getElementById("polycarbonate");
     
     const normalizedCurrentFrame = normalizeString(currentFrame);
     const normalizedCurrentPoly = normalizeString(currentPolycarbonate);
+    const normalizedCurrentForm = normalizeString(currentForm);
+    
+    // ========== ОСОБЫЙ СЛУЧАЙ: Арочная + каркас 20×20 → рекомендуем 40×20 (не шаг 0.65) ==========
+    const isArched = normalizedCurrentForm.includes("арочная");
+    const frameNorm = normalizedCurrentFrame.replace(/×/g, "х"); // унифицируем × и х
+    const isSingle20x20 = !normalizedCurrentFrame.includes("+") && (frameNorm.includes("20х20") && !frameNorm.includes("40х20"));
+    if (isArched && isSingle20x20) {
+        for (let i = 0; i < frameSelect.options.length; i++) {
+            const optionValue = frameSelect.options[i].value.trim();
+            const normalizedOption = normalizeString(optionValue);
+            if (normalizedOption.includes("40х20") && !normalizedOption.includes("+")) {
+                return {
+                    altFrame: optionValue,
+                    altArcStep: currentArcStep,
+                    altPolycarbonate: currentPolycarbonate,
+                    reasonText: "усиленный каркас"
+                };
+            }
+        }
+    }
     
     // ========== ШАГ 1: Улучшаем шаг дуг до 0.65 (если не 0.65) ==========
     if (currentArcStep !== 0.65) {
@@ -2565,7 +2592,7 @@ function pickReserveVariant() {
                         altFrame: optionValue,
                         altArcStep: currentArcStep,
                         altPolycarbonate: currentPolycarbonate,
-                        reasonText: "усиленный каркас 40×20"
+                        reasonText: "усиленный каркас"
                     };
                 }
             }
@@ -3843,28 +3870,38 @@ window.onload = async function () {
     } else {
     }
     
-    // Периодическая проверка версии пароля каждые 5 минут (увеличено с 30 секунд)
-    // Проверка только если страница видна и пользователь залогинен
+    // Проверка версии пароля при возврате во вкладку (мгновенный выкид при смене пароля)
+    document.addEventListener('visibilitychange', async () => {
+        if (document.visibilityState === 'visible') {
+            const savedLogin = localStorage.getItem('savedLogin');
+            if (savedLogin && document.getElementById("calculator-container") && !document.getElementById("calculator-container").classList.contains("hidden")) {
+                await checkPasswordVersion();
+            }
+        }
+    });
+
+    // Периодическая проверка версии пароля каждые 30 секунд
     setInterval(async () => {
         const savedLogin = localStorage.getItem('savedLogin');
         if (savedLogin && document.getElementById("calculator-container") && !document.getElementById("calculator-container").classList.contains("hidden")) {
-            // Тихо проверяем версию пароля (не разлогиниваем при сетевых ошибках)
             await checkPasswordVersion();
         }
-    }, 300000); // Проверка каждые 5 минут (300000 мс) вместо 30 секунд
+    }, 30000);
     
     // Принудительная проверка кнопки админа через 1 секунду (на случай задержки)
     setTimeout(() => {
         const savedLogin = localStorage.getItem('savedLogin');
-        if (savedLogin === 'admin' || savedLogin?.toLowerCase() === 'admin') {
-            const adminBtn = document.getElementById('admin-button');
-            if (adminBtn) {
-                adminBtn.classList.remove('hidden');
-                adminBtn.style.display = 'block';
-                adminBtn.style.visibility = 'visible';
-            } else {
-                console.error("❌ Кнопка admin-button всё ещё не найдена после задержки");
-            }
+        const adminBtn = document.getElementById('admin-button');
+        if (!adminBtn) return;
+        const isAdmin = savedLogin && savedLogin.trim().toLowerCase() === 'admin';
+        if (isAdmin) {
+            adminBtn.classList.remove('hidden');
+            adminBtn.style.display = 'block';
+            adminBtn.style.visibility = 'visible';
+        } else {
+            adminBtn.classList.add('hidden');
+            adminBtn.style.display = 'none';
+            adminBtn.style.visibility = 'hidden';
         }
     }, 1000);
 }
@@ -4094,8 +4131,9 @@ function toggleAdminPanel() {
     }
     
     if (isHidden) {
-        // Проверяем права админа перед показом
-        const isAdmin = localStorage.getItem(ADMIN_KEY) === 'true';
+        // Проверяем права админа: только логин "admin"
+        const savedLogin = localStorage.getItem('savedLogin');
+        const isAdmin = savedLogin && savedLogin.trim().toLowerCase() === 'admin';
         if (!isAdmin) {
             showError("У вас нет прав доступа к админ-панели.");
             return;
@@ -4143,9 +4181,10 @@ async function changeUserPassword() {
         return;
     }
 
-    // Проверяем права админа
-    const isAdmin = localStorage.getItem(ADMIN_KEY) === 'true';
-    if (!isAdmin) {
+    // Проверяем права админа: только логин "admin"
+    const savedLoginAdmin = localStorage.getItem('savedLogin');
+    const isAdminUser = savedLoginAdmin && savedLoginAdmin.trim().toLowerCase() === 'admin';
+    if (!isAdminUser) {
         messageDiv.innerText = "У вас нет прав для изменения паролей!";
         messageDiv.style.color = "red";
         return;
@@ -4210,7 +4249,7 @@ WHERE id = ${userId};`;
         }
 
         // Если всё успешно
-        messageDiv.innerText = `✅ Пароль успешно изменён! Все пользователи с логином "${userLogin}" будут разлогинены в течение 30 секунд.`;
+        messageDiv.innerText = `✅ Пароль успешно изменён! Пользователь "${userLogin}" будет разлогинен при возврате во вкладку или в течение 30 секунд.`;
         messageDiv.style.color = "green";
 
         // Очищаем поля
@@ -4357,7 +4396,7 @@ async function loadAllDeliveryDates(forceRefresh = false) {
         if (DEBUG) console.log('📊 Получено записей:', data ? data.length : 0, 'Ошибка:', error);
         
         if (error && error.code === '42703') {
-            console.warn('⚠️ Колонка assembly_date или restrictions не найдена. Выполните миграцию: db/migrations/20260213_add_assembly_date_to_delivery_dates.sql');
+            if (DEBUG) console.warn('⚠️ Колонка assembly_date или restrictions не найдена. Выполните миграцию: db/migrations/20260213_add_assembly_date_to_delivery_dates.sql');
             const { data: fallbackData, error: fallbackError } = await supabaseClient
                 .from('delivery_dates')
                 .select('city_name, delivery_date')
@@ -4431,20 +4470,20 @@ async function loadAllDeliveryDates(forceRefresh = false) {
 
         if (error) {
             console.error("❌ Ошибка при загрузке дат доставки:", error);
-            console.error("Детали ошибки:", JSON.stringify(error, null, 2));
+            if (DEBUG) console.error("Детали ошибки:", JSON.stringify(error, null, 2));
             container.innerHTML = 
                 '<div class="no-data" style="color: red; padding: 20px;">Ошибка загрузки данных из базы. Проверьте подключение к Supabase.<br><br>Детали: ' + (error.message || 'Неизвестная ошибка') + '<br>Код ошибки: ' + (error.code || 'N/A') + '</div>';
             return;
         }
 
         if (!dataWithRestrictions || dataWithRestrictions.length === 0) {
-            console.warn("⚠️ Данные о датах доставки отсутствуют или пусты. Загружено записей:", data ? data.length : 0);
+            if (DEBUG) console.warn("⚠️ Данные о датах доставки отсутствуют или пусты. Загружено записей:", data ? data.length : 0);
             container.innerHTML = 
                 '<div class="no-data">Данные о датах доставки отсутствуют в базе данных.</div>';
             return;
         }
         
-        console.log("✅ Успешно загружено дат доставки:", dataWithRestrictions.length);
+        if (DEBUG) console.log("✅ Успешно загружено дат доставки:", dataWithRestrictions.length);
 
         // Формируем таблицу
         renderDeliveryDatesTable(dataWithRestrictions);
@@ -4835,7 +4874,7 @@ const faqData = {
         {
             category: "delivery",
             question: "Как рассчитывается стоимость доставки?",
-            answer: "💰 Формула стоимости доставки:\n• 40 руб/км, но не менее 1000 руб.\n• Если клиент покупает сборку, дополнительно 500 руб + 40 рублей км, но не менее 1000 к итоговой цене доставки."
+            answer: "💰 Формула стоимости доставки:\n• Тариф зависит от склада: 45 руб/км (Москва, Питер, Тула, Калуга, Рязань, Тверь, Великий Новгород) или 50 руб/км (остальные города). Минимум 1000 руб.\n• Без сборки: 500 руб + тариф × км. Со сборкой: тариф × км."
         },
         {
             category: "delivery",
@@ -7293,7 +7332,7 @@ async function copyImageToClipboard(imageUrl, button) {
             return;
         } catch (pngError) {
             // Если PNG не сработал, пробуем оригинальный формат
-            console.log('PNG не сработал, пробуем оригинальный формат:', pngError);
+            if (DEBUG) console.log('PNG не сработал, пробуем оригинальный формат:', pngError);
             
             // Получаем оригинальный Blob
             let originalBlob;
