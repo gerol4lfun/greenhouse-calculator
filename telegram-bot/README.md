@@ -1,14 +1,16 @@
 # Telegram-бот: даты доставки
 
-Бот получает список дат в ТГ → парсит → обновляет Supabase. Railway деплоит из репо **gerol4lfun/delivery-bot-telegram**.
+Бот получает список дат в ТГ → парсит → обновляет Supabase. Railway деплоит из **отдельного** репо **gerol4lfun/delivery-bot-telegram** (не из репо калькулятора).
+
+**Инструкция для Cursor/разработчиков:** см. **docs/instructions/ПУШ_В_РЕПОЗИТОРИИ_ИНСТРУКЦИЯ.md** — там описано, какие файлы копировать в клон delivery-bot-telegram и как пушить без костылей.
 
 ## Деплой
 
-Код редактируется здесь (`greenhouse-calculator/telegram-bot/`), деплой — из отдельного репо:
+Код редактируется **здесь** (`greenhouse-calculator/telegram-bot/`), а в GitHub пушится из **отдельного клона** репо delivery-bot-telegram:
 
 ```bash
-cd ~/Downloads/delivery-bot-telegram
-cp /путь/к/greenhouse-calculator/telegram-bot/{cities.js,parser.js,supabase.js,index.js} .
+# В клоне delivery-bot-telegram скопировать файлы из этого проекта и пушить оттуда
+cp /путь/к/greenhouse-calculator/telegram-bot/{index.js,parser.js,cities.js,supabase.js,package.json} .
 git add . && git commit -m "update" && git push origin main
 ```
 

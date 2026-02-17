@@ -1,4 +1,5 @@
 {
+  "_projectVersion": "v212",
   "files.exclude": {
     "**/.git": true,
     "**/.DS_Store": true
